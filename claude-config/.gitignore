@@ -1,0 +1,18 @@
+# Allowlist strategy: ignore everything, then explicitly track config we author.
+# ~/.claude is full of runtime data (cache, sessions, plugins, credentials) —
+# safer to opt-in to tracked files than to enumerate everything to exclude.
+/*
+
+# Tracked config
+!/.gitignore
+!/CLAUDE.md
+!/settings.json
+!/statusline.sh
+!/agents
+!/commands
+!/skills
+!/rules
+!/planning
+
+# Never track machine-local overrides, even inside tracked dirs
+**/settings.local.json

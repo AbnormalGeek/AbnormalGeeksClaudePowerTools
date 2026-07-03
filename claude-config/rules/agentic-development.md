@@ -1,0 +1,127 @@
+# Agentic Development — Fleet, Pipeline & Conventions
+
+> Durable global standard for how multi-agent development runs on this machine.
+> The enforceable summary lives in `~/.claude/CLAUDE.md` (Agent Fleet +
+> Workflow sections); this file is the full reference. Facts verified against
+> code.claude.com docs 2026-07-02 (Claude Code 2.1.199).
+
+## The fleet (`~/.claude/agents/`)
+
+| Agent | Model | Effort | Role | Can spawn |
+|-------|-------|--------|------|-----------|
+| **project-manager** | fable | high | Orchestrator for features/products: decompose → research fan-out → central plan → parallel implementation waves → validation gates | any agent (inherits all tools) |
+| **researcher** | opus (→ latest) | inherit | Investigates one topic; verifies against live sources; writes `.claude/knowledge/<topic>/` | distiller only |
+| **distiller** | haiku | low | Parses/condenses large pages, files, logs, command output; can offload huge inputs to an optional local LLM via `askllm` | — |
+| **coder** | sonnet (→ latest) | inherit | Atomic implementation task: one module/component/fix + its tests, targeted test loop | — |
+| **validator** | haiku | inherit | Completion gate. `targeted` level for leaf work, `full` for milestones; Unity batchmode runner for C# projects | — |
+| **context-keeper** | sonnet | inherit | Keeps CLAUDE.md/context/memory current; global-config git workflow | — |
+| _your domain agents_ | sonnet | inherit | Domain specialists you add — infra ops, business manager, DNS/proxy, etc. Copy `~/.claude/agents/domain-agent-template.md` per domain | — |
+
+Model aliases in frontmatter resolve to the **latest** version per tier
+(`opus` → latest Opus, `sonnet` → latest Sonnet, `haiku` → latest Haiku,
+`fable` → latest Fable). Never pin full model IDs in agent files unless a
+specific version is required. Subagent nesting is native (since v2.1.172, max
+depth 5); `Agent(name)` in `tools:` restricts which types an agent may spawn.
+Subagents inherit the full CLAUDE.md/memory hierarchy automatically — do not
+duplicate global context in agent prompts.
+
+## The pipeline (how a feature/product gets built)
+
+1. **Intake** — main session or `project-manager` receives the goal. Domain
+   questions (business facts, infrastructure, pricing/policy) go to the
+   matching domain specialist agent if you've created one.
+2. **Research fan-out** — PM spawns one `researcher` per topic **in parallel**.
+   Each researcher verifies against live sources (never training data), pulls in
+   `distiller`s for bulk content, and writes organized markdown to the
+   project's `.claude/knowledge/<topic>/`. PM waits for all to complete.
+3. **Plan** — PM reads the research and creates/updates the project's central
+   execution plan in `~/.claude/planning/<project>/` (see conventions below).
+   Work is decomposed into **independent, parallelizable leaves** with explicit
+   dependencies — enabled by the functional-core + DI standards (pure modules
+   with injected seams are what make multi-agent work on one codebase safe).
+4. **Execute in waves** — PM fans out `coder` agents on independent leaves
+   (parallel within a wave; waves ordered by dependency). Tracks work on the
+   native task board (`TaskCreate`/`TaskUpdate` with `blockedBy`) — not
+   hand-rolled markdown checkboxes.
+5. **Gate** — every leaf ends with `validator` at **targeted** level (tests
+   related to the changed files only). A milestone (a wave/tree completed,
+   before dependents build on it) gets `validator` at **full** level.
+6. **Finalize** — update the execution plan + SPEC_INDEX, `context-keeper`
+   records durable facts, commit green work (conventional commits, **no
+   attribution trailers** — Golden Rule 0).
+
+In an `ultracode` session the main loop may use the Workflow tool instead of a
+PM subagent — same pipeline, script-driven. The PM agent is for delegating the
+whole pipeline out of the main conversation.
+
+## Conventions
+
+### Research knowledge — project-local `.claude/knowledge/`
+- Path: `<repo>/.claude/knowledge/<topic-kebab>/<NN>-<subtopic>.md`
+- Each file starts with frontmatter: `date`, `sources` (URLs), `confidence`.
+- `<repo>/.claude/knowledge/INDEX.md` lists every topic with a one-line hook —
+  researchers append to it; PM reads it first.
+- Knowledge is versioned **with the code** (it explains why the code is shaped
+  the way it is). Do not put plans here.
+
+### Execution plans — global `~/.claude/planning/<project>/`
+- Central, cross-session, cross-repo: `EXECUTION_PLAN.md` (authoritative
+  status/decisions/next steps), `SPEC_INDEX.md` (board), `specs/` (wsNN triads).
+- **Project slug** = git remote origin repo name (lowercased), else directory
+  basename. Every project gets a row in `~/.claude/planning/REGISTRY.md`
+  (slug → absolute repo path → one-line description) — the traceability link
+  back to the repo and the collision check.
+- Legacy project-local `.claude/planning/` trees keep working: the spec skills
+  detect them and use them until migrated; migrate a project by moving its
+  tree to `~/.claude/planning/<slug>/` and adding the REGISTRY row on the next
+  natural touch.
+- Permissions for these paths are pre-allowed in `~/.claude/settings.json`.
+
+### Validation levels
+- **targeted** (default for every coder leaf): `git diff --name-only` →
+  run only related tests (`vitest related` / `jest --findRelatedTests` /
+  `pytest <files>` / `go test <pkgs>`), lint changed files, typecheck.
+- **full** (milestone/tree gate + before any commit): the project's composite
+  validate/release script — lint + typecheck + all tests w/ coverage + build.
+- **Unity**: headless batchmode NUnit —
+  `Unity -runTests -batchmode -projectPath . -testPlatform EditMode|PlayMode -testResults out.xml`,
+  parse the XML.
+- The validator may add missing helper scripts to `package.json`
+  (`test:related`, `validate`) when a project lacks them.
+
+### Local LLM offload — `askllm` (optional, zero-token bulk work)
+- Entirely optional. If you run a local OpenAI-compatible gateway (e.g.
+  LiteLLM/vLLM/Ollama at `http://<your-llm-host>:4000/v1`), a small
+  `~/.local/bin/askllm` script pipes stdin + an instruction to it:
+  `cat big.log | askllm "extract every ERROR with root cause"`.
+  Standard env vars: `LLM_API_URL`, `LLM_API_KEY`, `LLM_MODEL`. Full setup +
+  the script live in `docs/local-llm-offload.md` in the setup repo this config
+  came from.
+- Use it for: bulk research distillation, giant-file/log summarization,
+  mechanical text transforms. Never for decisions, code, or anything needing
+  current knowledge. If the gateway is down (or you never set one up), fall
+  back to `distiller` (Haiku).
+
+## MCP servers
+
+| Server | Scope | Status | Notes |
+|--------|-------|--------|-------|
+| context7 | user | **recommended** | live library docs; use before writing against any external API |
+| playwright | user | **recommended** | real-browser E2E driving; keep committed E2E as Playwright test files run via Bash (≈4× cheaper) |
+| postgres (crystaldba/postgres-mcp) | user | optional | only with a read-only role on the target DB; run `--access-mode=restricted` |
+| github official | — | usually skip | `gh` CLI covers it; revisit only for structured Actions-log/security-alert reads |
+| filesystem/fetch/search/memory/sequential-thinking MCPs | — | skip | duplicate Claude Code natives |
+
+Give MCP tools to agents via `tools:` allowlist (`mcp__<server>` = whole
+server); wire project-specific servers (game engines, app DBs) in that repo's
+`.mcp.json` so they never load in unrelated sessions.
+
+## Parallelize by default
+
+- Independent leaves → one agent each, same message, concurrent.
+- Code must stay parallel-agent-safe: functional core + DI, one module per
+  concern, no cross-cutting edits in a leaf. If two leaves must touch the same
+  file, they are one leaf or two waves.
+- Cheap/bulk → haiku or `askllm`. Research → opus. Implementation → sonnet.
+  Orchestration/hard synthesis → fable. Don't over-frugalize: tune down later
+  where usage shows it's safe, not preemptively.
