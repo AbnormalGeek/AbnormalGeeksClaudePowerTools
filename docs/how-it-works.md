@@ -1,4 +1,4 @@
-# How It Works — The Agentic Development System
+# How It Works — The Agentic Development System (v2: "the web")
 
 This is the deep dive on the system installed by this repo: what each piece is, why it's shaped
 that way, and how a feature actually flows through it. The enforceable rules live in the
@@ -7,38 +7,154 @@ explains the system to you, the human running it.
 
 ## The core idea
 
-One smart orchestrator, many cheap specialists, and code standards that make parallel work safe.
+One smart orchestrator, a **self-extending web** of cheap specialists, and code standards that
+make parallel work safe.
 
 Your main session (ideally Fable 5 at `/effort ultracode`) never grinds through bulk work
 itself — it decomposes, delegates to purpose-built subagents running cheaper models, and gates
-everything through validation before calling anything done. The result is faster (parallel
-waves), cheaper (right model per job), and more reliable (nothing is "done" until a validator
-says so).
+everything through validation before calling anything done. What's new in v2 is that the fleet
+is no longer fixed: an agent whose whole job is designing and installing new agents
+(`agent-smith`) means the roster grows to fit your work instead of you working around a fixed
+roster. The result is faster (parallel waves), cheaper (right model per job), more reliable
+(nothing is "done" until a validator says so), and it gets better fitted to your workflow over
+time instead of staying static.
 
-## The fleet (`~/.claude/agents/`)
+## Orchestrator context discipline (the non-negotiable rule)
 
-| Agent | Model | Role |
-|-------|-------|------|
-| **project-manager** | fable | Orchestrator for features/products: decompose → research fan-out → central plan → parallel implementation waves → validation gates. Can spawn any other agent. |
-| **researcher** | opus | Investigates one topic; verifies against **live sources**, never training data; writes findings to the project's `.claude/knowledge/<topic>/`. |
-| **coder** | sonnet | One atomic implementation task: a single module/component/fix **plus its tests**, with a targeted test loop. Several run in parallel on independent files. |
-| **distiller** | haiku | Parses/condenses large pages, files, logs, command output. Can offload huge inputs to a local LLM if you set one up (see [local-llm-offload.md](local-llm-offload.md)). |
-| **validator** | haiku | The completion gate. `targeted` level per leaf, `full` per milestone. May add missing helper scripts (`test:related`, `validate`) to a project's package.json. |
-| **context-keeper** | sonnet | Keeps CLAUDE.md, context files, and memory current; handles the config-repo git workflow. |
+This is rule #1 of the fleet and the single idea everything else supports:
 
-Plus `agents/domain-agent-template.md` — a commented template for building your own **domain
-specialists** (an infra admin, a business-ops agent, whatever your life needs). The pattern:
-one agent per durable domain, holding that domain's facts and runbooks in its prompt, pinned to
-sonnet.
+> Top-level and orchestrator contexts do planning, sequencing, judgment, gating, and commits —
+> nothing else. ALL reading, research, scanning, implementation, and validation go to subagents
+> that return conclusions, never raw dumps.
 
-**Why models are pinned per agent:** the orchestrator needs the smartest model because
-decomposition and synthesis are the hard parts. Research needs strong reasoning (opus).
-Implementation of a well-specified leaf is sonnet territory. Condensing and gate-running are
-mechanical (haiku). Agent frontmatter uses model **aliases** (`fable`, `opus`, `sonnet`,
-`haiku`) that resolve to the latest version of each tier — never pin full model IDs unless you
-need a specific version. Subagents can nest (an agent's `tools:` list controls what it may
+If your top-level session is reading a file, grepping a codebase, or watching test output
+scroll by, that's a leaf you skipped delegating. The orchestrator's context is the scarcest,
+most expensive resource in the system — protect it by construction, not by discipline you have
+to remember every time.
+
+## The four tiers
+
+Every agent in the shipped fleet sits in exactly one tier, picked by task shape, not by
+familiarity:
+
+| Tier | Model | Shape | Shipped agents |
+|------|-------|-------|-----------------|
+| **Orchestrator** | Fable | Orchestration, synthesis, creation | `project-manager`, `agent-smith` |
+| **Specialist** | Opus | Deep research / domain brain | `researcher`, `agent-forge` |
+| **Dev / ops** | Sonnet | Implementation, one atomic leaf | `coder`, `java-dev`, `python-dev`, `ts-dev`, `git-ops`, `config-editor`, `context-keeper`, `domain-agent-template` (a template, not a running agent) |
+| **Utility** | Haiku | Bulk read / parse / extraction, cheap context shield | `web-fetcher`, `log-analyzer`, `repo-scout`, `doc-fetcher`, `distiller`, `validator` |
+
+Agent frontmatter uses model **aliases** (`fable`, `opus`, `sonnet`, `haiku`) that resolve to
+the latest version of each tier — never pin full model IDs unless you need a specific version.
+Subagents can nest (up to 5 levels deep; an agent's `tools:` list documents which agents it may
 spawn), and they inherit your full CLAUDE.md/memory hierarchy automatically — don't duplicate
 global context in agent prompts.
+
+**Why the tiers are pinned this way:** the orchestrator needs the smartest model because
+decomposition and synthesis are the hard parts. Research and fleet-mechanics need strong
+reasoning (opus). Implementation of a well-specified leaf is sonnet territory. Bulk
+reading/condensing/gating is mechanical (haiku) — these agents exist specifically to keep large
+inputs out of a smarter, more expensive context.
+
+Add your own **domain specialists** (an infra admin, a business-ops advisor, whatever your work
+needs) by copying `~/.claude/agents/domain-agent-template.md` — one agent per stable domain,
+holding that domain's facts and runbooks in its prompt, pinned to sonnet. Or just describe the
+gap to `agent-smith` and let it design one for you (see below).
+
+## The roster web — how agents stay current without drifting
+
+Every agent in the fleet needs to know who else exists and how to delegate, but hard-coding that
+table into 18 separate agent files would drift the moment one agent changed. The system solves
+this with **live loading**, not sync scripts:
+
+- **Global fleet map, one copy, `@import`ed once.** `~/.claude/CLAUDE.md` contains
+  `@rosters/fleet-map.md` — a single `@import` line. Every session (top-level or subagent)
+  inherits CLAUDE.md, so every context in the web sees the current fleet map with zero
+  per-agent duplication. `rosters/fleet-map.md` itself stays under a ~90-line cap; anything
+  bigger belongs in one of the detail files below it.
+- **Playbook detail loads per-audience via skills, at invocation time.** Three skills —
+  `roster-sdm` (orchestrator playbook), `roster-sde` (dev-agent support roster), and
+  `liveliness` (the status-reporting protocol) — are marked `skills:` in the relevant agents'
+  frontmatter, so Claude Code auto-preloads them. Each skill's entire body is one line:
+  `` !`cat ~/.claude/rosters/<file>.md` `` — a **live shell substitution**, not a static copy. The
+  skill re-reads the roster file every time it loads, so there is nothing to keep in sync; edit
+  the roster file once and every agent that preloads that skill sees the edit on its very next
+  invocation.
+- **EMPIRICAL — `@import` does NOT expand inside agent definition bodies.** This was tested
+  directly against Claude Code 2.1.212: an `@path` line placed inside an agent's own `.md` body
+  (as opposed to `CLAUDE.md`) stays literal text — the target file's content never appears in
+  that agent's context. This is *why* the roster detail files are wired through skills'
+  `` !`cat` `` mechanism instead of `@import` lines inside each agent file: `@import` only
+  expands where Claude Code's own context-loading walks (CLAUDE.md and its import chain), never
+  inside a subagent's prompt body. Don't rely on `@import` for agent-to-agent knowledge sharing
+  — it silently does nothing.
+- **`Agent(a, b)` spawn lists are behavioral, not enforced.** An agent's frontmatter `tools:`
+  line can include `Agent(agent-forge, researcher)` to document who it may call — but Claude
+  Code does not actually restrict subagent spawning to that list at runtime. Treat these as the
+  web's documented edges (and honor them), not as a security boundary. If a spawn restriction is
+  genuinely load-bearing, the real enforcement point is `permissions.deny` in settings, and the
+  agent's doc comment should say so.
+
+## agent-smith — the fleet's self-extension mechanism
+
+`agent-smith` (Fable) is the only agent that changes the fleet's shape. It designs; a paired
+agent, `agent-forge` (Opus), does the mechanics — writing the file, updating roster rows, and
+validating — so a bad install can't corrupt the config repo from a rushed edit.
+
+**Trigger it whenever:**
+- The same task shape recurs twice in different jobs — that's a template, not a coincidence.
+- You're about to hand-roll the same multi-step inline workflow again (more than ~3 steps).
+- A domain or tool has no owner in the roster.
+- An existing agent is repeatedly asked to be "X, but always for Y" — that's a specialization
+  worth carving out.
+
+This is a **mandatory reflex for Fable orchestrators**, not just a suggestion — the fleet map
+states it as delegation rule #4. Anyone can invoke it directly with the `/new-agent <the gap>`
+skill, which spawns `agent-smith` with your gap report and relays its design decisions back
+(tier, model, tools, roster placement) once `agent-forge` has installed the result.
+
+**Pipeline:** gap report in → `agent-smith` reads `ROSTER.md` and `fleet-map.md`, picks a tier by
+task shape (using the same four-tier table above), designs least-privilege tools and a
+`skills:` preload appropriate to the tier, and starts from the matching
+`~/.claude/templates/agents/<tier>.md` template → hands `agent-forge` a complete spec → the new
+agent file is written, `ROSTER.md`/`fleet-map.md` rows are added, and it's validated. **New and
+changed agents are live starting the next Claude Code session**, not the one that created them —
+`agent-smith` always says so explicitly in its report.
+
+## The five-channel liveliness stack
+
+When most of the real work happens off-screen in subagent context windows, a quiet terminal
+looks like a stall even when the fleet is working hard. Liveliness is the fix: five channels,
+the first two automatic, the last three the agent's job.
+
+1. **Lifecycle hooks (automatic).** A `SubagentStart`/`SubagentStop` hook
+   (`hooks/subagent-liveliness.sh`) fires on every subagent transition, prints a short
+   `▶ started` / `✔ done` system line, and maintains a live-agent state file so other channels
+   (below) can read current fleet activity. It's written to never block a spawn — any
+   unexpected input degrades to a silent no-op.
+2. **Statusline (automatic).** The statusline script refreshes on a short interval and renders
+   the live agent count/names straight from that same state file, so the footer always reflects
+   the web actually working, not just the top-level turn.
+3. **Orchestrator narration.** Every orchestrator prints one line before each spawn or wave
+   (`▶ started: <what> → <agent>(s)`), one line after each result lands (`✔ done: <what> — <one
+   clause>`), and one line before each gate (`⟳ gate: <validator> on <what>`). Only top-level
+   text reaches the user, so a subagent orchestrator's narration duty becomes its **TIMELINE**
+   (below) — written so its parent can relay it upward.
+4. **Native task board.** Orchestrators stand up the wave plan with `TaskCreate` *before*
+   fanning out (not after), mark tasks in-progress/completed as leaves run, and encode wave
+   ordering with `blockedBy`. The user watches progress live; this replaces any hand-rolled
+   markdown checkbox board.
+5. **Report contract.** Every agent's final report opens with the same two lines, no exceptions:
+   ```
+   STATUS: ok | partial | blocked — <one line: what happened>
+   TIMELINE: <2-6 compact lines: did X, found Y, spawned Z, gate result>
+   ```
+   followed by a `BLOCKERS:` section only when status isn't `ok`, then the body the caller
+   asked for. A parent orchestrator relays this cheaply instead of re-deriving what happened.
+
+Silence longer than one wave is treated as a protocol violation, not a quirk — if a long-running
+leaf is still going, the rule is to say so ("⏳ still running: full validation suite, ~2min in"),
+not to go quiet until it finishes.
 
 ## The pipeline (how a feature gets built)
 
@@ -49,12 +165,17 @@ global context in agent prompts.
    waits for all to complete.
 3. **Plan** — the PM reads the research and creates/updates the project's central execution
    plan in `~/.claude/planning/<slug>/`. Work is decomposed into **independent, parallelizable
-   leaves** with explicit dependencies.
-4. **Execute in waves** — the PM fans out `coder` agents on independent leaves (parallel within
-   a wave; waves ordered by dependency), tracking work on the native task board
-   (`TaskCreate`/`TaskUpdate` with `blockedBy`) rather than hand-rolled markdown checkboxes.
+   leaves** with explicit dependencies, following the atomic-leaf contract (goal, acceptance
+   criteria, files in scope, tests required, out of scope, report-back ask) — a leaf you can't
+   fill that template out for isn't atomic yet.
+4. **Execute in waves** — the PM fans out dev-tier agents (the right language specialist, or
+   `coder` as the generalist fallback) on independent leaves — parallel within a wave, waves
+   ordered by dependency — tracking work on the native task board (`TaskCreate`/`TaskUpdate`
+   with `blockedBy`) rather than hand-rolled markdown checkboxes.
 5. **Gate** — every leaf ends with `validator` at **targeted** level. A milestone (a completed
-   wave, before dependents build on it) gets `validator` at **full** level.
+   wave, before dependents build on it) gets `validator` at **full** level, and anything
+   judgment-heavy (security-sensitive, public-facing copy, prod-touching) gets a review gate on
+   top.
 6. **Finalize** — update the execution plan and SPEC_INDEX, have `context-keeper` record
    durable facts, and commit green work (conventional commits, **no attribution trailers** —
    Golden Rule 0).
@@ -113,12 +234,17 @@ first-class part of the system:
 | `/spec-new` | Creates a new spec triad in the central planning dir and registers the slug |
 | `/spec-run` | Executes the next unblocked tasks from a spec, via the pipeline |
 | `/spec-status` | Shows the board across specs/workstreams |
+| `/new-agent <gap>` | Spawns `agent-smith` to design and install a new roster agent for a recurring task shape |
 | `/ci-check` | Watches the latest CI run to completion — because a push triggers a deploy, a push isn't done until CI is green |
 | `/sync-config` | Commits (and pushes) the `~/.claude` config repo |
 
+`roster-sdm`, `roster-sde`, and `liveliness` are also skills, but they're auto-preloaded via
+agent frontmatter rather than invoked directly — see "The roster web" above. Running them
+manually (`/roster-sdm`, etc.) just shows you the current roster content.
+
 ## Validation levels
 
-- **targeted** (default per coder leaf): `git diff --name-only` → run only related tests
+- **targeted** (default per dev-tier leaf): `git diff --name-only` → run only related tests
   (`vitest related` / `jest --findRelatedTests` / `pytest <files>` / `go test <pkgs>`), lint
   changed files, typecheck.
 - **full** (milestone gate + before any commit): the project's composite validate script —
@@ -140,7 +266,7 @@ are the enabler, not an afterthought:
   build concurrently without stepping on each other.
 - **Dependency injection at the edges** — collaborators injected via constructor or a
   default-param seam, never constructed inside logic. Every module's dependencies are explicit,
-  so a coder agent working on one leaf can't create hidden coupling to another.
+  so a dev agent working on one leaf can't create hidden coupling to another.
 - **One module per concern, no cross-cutting edits in a leaf.** If two leaves must touch the
   same file, they are one leaf — or two sequential waves.
 - **Tests ship with the code, in the same leaf** — unit + property tests for the pure core,
@@ -153,5 +279,6 @@ are the enabler, not an afterthought:
   orchestration for substantive jobs.
 - `ultrathink` in any prompt — one-off deeper reasoning, no session change.
 - Parallelize by default: independent leaves → one agent each, same message, concurrent.
-  Cheap/bulk → haiku (or local LLM). Research → opus. Implementation → sonnet.
+  Cheap/bulk → haiku (or an optional local LLM — see
+  [local-llm-offload.md](local-llm-offload.md)). Research → opus. Implementation → sonnet.
   Orchestration/hard synthesis → fable.

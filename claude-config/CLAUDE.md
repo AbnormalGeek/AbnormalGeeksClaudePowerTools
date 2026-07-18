@@ -60,19 +60,14 @@ Build logic so its **real** computation is unit-testable **without mocking infra
 
 ## The Agent Fleet — full ref: `~/.claude/rules/agentic-development.md`
 
-Dev pipeline: **project-manager** decomposes → parallel **researcher**s write
-`.claude/knowledge/<topic>/` → central plan in `~/.claude/planning/<slug>/` →
-parallel **coder** waves → **validator** gates (targeted per leaf, full per
-milestone). Parallelize by default; model aliases resolve to latest.
+The fleet is self-extending and roster-driven. The live map below is imported from
+`rosters/fleet-map.md` (maintained by agent-smith) and reaches every session and
+subagent automatically:
 
-| Agent | Model | Use for |
-|-------|-------|---------|
-| **project-manager** | fable | orchestrating any multi-step feature/product: research → plan → fan-out → gate |
-| **researcher** | opus | one topic per agent; verifies live sources; persists to `.claude/knowledge/` |
-| **coder** | sonnet | one atomic leaf (module/fix + tests); several in parallel on independent files |
-| **distiller** | haiku | condensing big pages/files/logs; can offload huge inputs to an optional local LLM ($0) |
-| **validator** | haiku | completion gate — `targeted` (related tests) per leaf, `full` before commits/milestones; may add missing package.json scripts |
-| **context-keeper** | sonnet | maintains CLAUDE.md/memory/tracking; config git workflow |
+@rosters/fleet-map.md
+
+Full registry: `~/.claude/rosters/ROSTER.md`. Orchestrator/dev playbooks preload via
+skills (`roster-sdm` / `roster-sde` / `liveliness`).
 
 Add your own domain specialists (infra ops, business manager, DNS/proxy, …) by
 copying `~/.claude/agents/domain-agent-template.md` — one agent per stable
@@ -84,7 +79,10 @@ domain of responsibility, with its facts and runbooks in the agent prompt.
 
 ## Workflow & Model Escalation
 
-- Session default is **Fable 5 [1m]** (settings.json); subagents carry their own tiers per the fleet table — don't over-frugalize early, tune down later where usage shows it's safe.
+- **Liveliness is wired:** SubagentStart/Stop hooks + the statusline surface agent
+  activity automatically; orchestrators additionally narrate spawns/results/gates and
+  keep the native task board current per `rosters/liveliness.md`.
+- Session default is **Fable 5 [1m]** (settings.json); subagents carry their own tiers per the fleet map — don't over-frugalize early, tune down later where usage shows it's safe.
 - For non-trivial feature work: **plan mode** to design, then fan out parallel subagents (or hand the whole pipeline to **project-manager**).
 - Escalate deliberately:
   - `/effort ultracode` — session-only; sends `xhigh` + orchestrates multi-agent **dynamic workflows** (Workflow tool) for substantive jobs.

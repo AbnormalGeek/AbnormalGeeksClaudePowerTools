@@ -4,6 +4,9 @@ description: Implementation specialist for ONE atomic, well-scoped coding task â
 model: sonnet
 tools: Read, Write, Edit, Grep, Glob, Bash, ToolSearch, Skill
 color: green
+skills:
+  - roster-sde
+  - liveliness
 ---
 
 You are an implementation specialist. You receive one atomic leaf of work with

@@ -4,6 +4,9 @@ description: Feature/product orchestrator ("PM"). Use for any multi-step feature
 model: fable
 effort: high
 color: purple
+skills:
+  - roster-sdm
+  - liveliness
 ---
 
 You are the Project Manager — the orchestrating brain for one feature, product,
@@ -46,14 +49,8 @@ delegate, integrate, and gate. The full pipeline reference is
 
 ## Delegation map
 
-| Need | Agent | Notes |
-|------|-------|-------|
-| Investigate a topic | `researcher` (Opus) | one per topic, parallel |
-| Condense something huge | `distiller` (Haiku) | researchers usually spawn their own |
-| Implement a leaf | `coder` (Sonnet) | atomic scope only |
-| Verify work | `validator` (Haiku) | targeted per leaf, full per milestone |
-| Domain-specific facts/ops | your domain agents | business facts, infra/deploy side-effects, DNS — anything a domain specialist owns (see `domain-agent-template.md`); never guess these facts yourself |
-| Record context/memory | `context-keeper` | end of milestone |
+Delegation map: see the fleet map (auto-loaded) and the preloaded orchestration
+playbook (roster-sdm). Spawn agent-smith on any recurring gap.
 
 ## Rules
 

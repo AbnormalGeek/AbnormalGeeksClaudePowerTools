@@ -13,6 +13,9 @@
 !/skills
 !/rules
 !/planning
+!/rosters
+!/templates
+!/hooks
 
 # Never track machine-local overrides, even inside tracked dirs
 **/settings.local.json

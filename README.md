@@ -2,10 +2,32 @@
 
 A deeply-iterated **Claude Code agentic development setup**, packaged so you can replicate it
 on your own machine with one command. This is not a starter template — it's a working system
-that has been refined over months of daily use: a fleet of custom subagents, a research → plan →
-parallel-implementation → validation pipeline, centralized planning conventions, engineering
-standards that make multi-agent work on one codebase safe, and the glue (skills, commands,
-statusline, config-as-git) that holds it together.
+that has been refined over months of daily use: a **self-extending web** of 18 custom
+subagents across four model tiers, a research → plan → parallel-implementation → validation
+pipeline, centralized planning conventions, engineering standards that make multi-agent work on
+one codebase safe, a five-channel liveliness stack so the terminal never looks dead mid-run,
+and the glue (skills, commands, statusline, config-as-git) that holds it together.
+
+## What's new in v2
+
+The fleet went from a fixed roster to a **self-extending web**:
+
+- **`agent-smith` + `agent-forge`** — the fleet now grows itself. Spot a recurring task shape or
+  a missing capability and spawn `agent-smith` (or run `/new-agent <the gap>`); it designs the
+  new agent's tier/tools/roster placement and hands the install mechanics to `agent-forge`.
+  New agents are live the next session.
+- **Four clean model tiers** (orchestrator/Fable, specialist/Opus, dev-ops/Sonnet,
+  utility/Haiku) replace the old ad-hoc model choices, with a template per tier under
+  `claude-config/templates/agents/` so every new agent starts from a consistent shape.
+- **A live-loading roster web**, not copy-pasted tables: `CLAUDE.md` `@import`s one global
+  fleet map, and per-audience playbooks (`roster-sdm` for orchestrators, `roster-sde` for dev
+  agents, `liveliness` for the status protocol) preload as skills that `cat` the current roster
+  file at invocation time — edit the roster once, every consumer sees it next call, nothing to
+  keep in sync.
+- **A five-channel liveliness stack** — lifecycle hooks + statusline are automatic; orchestrator
+  narration, the native task board, and a `STATUS:`/`TIMELINE:` report contract are the agent's
+  job — so long delegated runs never look stalled.
+- Full write-up: [docs/how-it-works.md](docs/how-it-works.md).
 
 ## Install: the one-liner
 
@@ -57,17 +79,24 @@ OS-agnostic; the installer and configs work on macOS too.
 
 Full detail in [docs/how-it-works.md](docs/how-it-works.md).
 
-1. **project-manager** decomposes a goal into research topics and independent work leaves.
-2. **Parallel researchers** (one per topic) verify against live sources and write findings to
+1. **The orchestrator never does the work itself.** Top-level and orchestrator contexts plan,
+   sequence, gate, and commit — reading, research, implementation, and validation all go to
+   subagents that return conclusions, never raw dumps.
+2. **project-manager** decomposes a goal into research topics and independent work leaves;
+   **agent-smith** grows the roster itself when a recurring task shape has no owner yet.
+3. **Parallel researchers** (one per topic) verify against live sources and write findings to
    the project-local `.claude/knowledge/<topic>/` — versioned with the code it explains.
-3. A **central plan** lives in `~/.claude/planning/<project-slug>/` (EXECUTION_PLAN, SPEC_INDEX,
+4. A **central plan** lives in `~/.claude/planning/<project-slug>/` (EXECUTION_PLAN, SPEC_INDEX,
    specs), cross-session and cross-repo, with a `REGISTRY.md` mapping slugs to repo paths.
-4. **Parallel coder waves** implement independent leaves concurrently — safe because the
-   engineering standards (functional core + dependency injection, one module per concern)
-   keep leaves from colliding.
-5. **Validator gates** everything: targeted (related tests only) per leaf, full (lint +
+5. **Parallel dev-tier waves** (a language specialist or the generalist `coder`) implement
+   independent leaves concurrently — safe because the engineering standards (functional core +
+   dependency injection, one module per concern) keep leaves from colliding.
+6. **Validator gates** everything: targeted (related tests only) per leaf, full (lint +
    typecheck + all tests + build) per milestone and before any commit.
-6. **Memory habits** persist durable facts across sessions: an auto-memory `MEMORY.md` index
+7. **A five-channel liveliness stack** keeps the terminal honest during long delegated runs:
+   automatic lifecycle hooks and statusline, plus orchestrator narration, a live task board,
+   and a `STATUS:`/`TIMELINE:` report contract from every agent.
+8. **Memory habits** persist durable facts across sessions: an auto-memory `MEMORY.md` index
    plus one-topic-per-file notes, so no session re-learns what a previous one verified.
 
 ## MCP servers
@@ -91,7 +120,7 @@ The repo touches exactly two locations:
 
 | Source | Destination | Contents |
 |--------|-------------|----------|
-| `claude-config/` | `~/.claude/` | `CLAUDE.md`, `settings.json`, `statusline.sh`, `agents/`, `commands/`, `rules/`, `skills/`, `planning/`, `.gitignore` |
+| `claude-config/` | `~/.claude/` | `CLAUDE.md`, `settings.json`, `statusline.sh`, `agents/`, `commands/`, `rules/`, `skills/`, `rosters/`, `templates/`, `hooks/`, `planning/`, `.gitignore` |
 | `ai-workspace-template/` | `~/ai_workspace/` | Workspace README + starter `.claude/CLAUDE.md` |
 
 `install.sh` is idempotent, needs no sudo, and **backs up any existing file it would overwrite**

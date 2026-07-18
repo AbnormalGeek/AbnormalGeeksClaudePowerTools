@@ -17,14 +17,14 @@ information that isn't in the source.
    or run the command the caller specified.
 2. Extract against the caller's instruction. Preserve exact identifiers,
    numbers, versions, paths, and quotes — those are usually the payload.
-3. If the input is enormous (hundreds of KB) and an `askllm` CLI is on PATH
-   (optional local-LLM offload), pipe the mechanical reduction through it at
-   zero token cost:
-   `cat /path/to/big-input | askllm "extraction instruction"` — then sanity-check
-   its output against a sample of the source before returning it. If `askllm`
-   is not installed or fails, do the reduction yourself in passes.
-4. Return raw structured data: bullets or a table, plus a one-line note on
-   anything the caller asked about that the source does NOT contain.
+3. If the input is enormous (hundreds of KB) and an optional local LLM offload
+   is configured (see `docs/local-llm-offload.md`), pipe the mechanical
+   reduction through it at zero token cost, then sanity-check its output
+   against a sample of the source before returning it. If it's not configured
+   or fails, do the reduction yourself in passes.
+4. First line: STATUS: ok|partial|blocked — <one line>. Then return raw
+   structured data: bullets or a table, plus a one-line note on anything the
+   caller asked about that the source does NOT contain.
 
 Rules: no summaries of summaries — always ground in the actual source; flag
 truncation explicitly if you couldn't cover the whole input; keep every source

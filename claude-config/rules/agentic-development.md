@@ -7,15 +7,16 @@
 
 ## The fleet (`~/.claude/agents/`)
 
-| Agent | Model | Effort | Role | Can spawn |
-|-------|-------|--------|------|-----------|
-| **project-manager** | fable | high | Orchestrator for features/products: decompose → research fan-out → central plan → parallel implementation waves → validation gates | any agent (inherits all tools) |
-| **researcher** | opus (→ latest) | inherit | Investigates one topic; verifies against live sources; writes `.claude/knowledge/<topic>/` | distiller only |
-| **distiller** | haiku | low | Parses/condenses large pages, files, logs, command output; can offload huge inputs to an optional local LLM via `askllm` | — |
-| **coder** | sonnet (→ latest) | inherit | Atomic implementation task: one module/component/fix + its tests, targeted test loop | — |
-| **validator** | haiku | inherit | Completion gate. `targeted` level for leaf work, `full` for milestones; Unity batchmode runner for C# projects | — |
-| **context-keeper** | sonnet | inherit | Keeps CLAUDE.md/context/memory current; global-config git workflow | — |
-| _your domain agents_ | sonnet | inherit | Domain specialists you add — infra ops, business manager, DNS/proxy, etc. Copy `~/.claude/agents/domain-agent-template.md` per domain | — |
+`~/.claude/rosters/fleet-map.md` is the compact global view, auto-imported into every
+session and subagent via `~/.claude/CLAUDE.md`'s `@import`; `~/.claude/rosters/ROSTER.md`
+is the full registry (model/effort/skills per agent). Both are maintained by
+**agent-smith** (design) and **agent-forge** (install) as the fleet grows.
+
+Tier philosophy: **fable** = orchestration & synthesis (decompose, plan, gate, spawn
+agent-smith on gaps); **opus** = deep specialists (research, domain admin, the
+agent-creation engine); **sonnet** = implementation & ops (coding, infra/business
+domains, config surgery); **haiku** = utility sponges (cheap, read-only, bulk-input
+shields). Models are pinned per agent via frontmatter aliases (resolution rule below).
 
 Model aliases in frontmatter resolve to the **latest** version per tier
 (`opus` → latest Opus, `sonnet` → latest Sonnet, `haiku` → latest Haiku,
@@ -24,6 +25,52 @@ specific version is required. Subagent nesting is native (since v2.1.172, max
 depth 5); `Agent(name)` in `tools:` restricts which types an agent may spawn.
 Subagents inherit the full CLAUDE.md/memory hierarchy automatically — do not
 duplicate global context in agent prompts.
+
+## The roster & context web (v2)
+
+- `~/.claude/CLAUDE.md` `@imports rosters/fleet-map.md` — combined with the full
+  CLAUDE.md/memory hierarchy being auto-inherited by every subagent, the fleet map
+  reaches every context in the web with zero manual wiring.
+- Audience playbooks (`roster-sdm`, `roster-sde`, `liveliness`) preload via agent
+  frontmatter `skills:` — the full skill content is injected at spawn time, and loader
+  skills `!cat` the roster file live, so edits to the roster propagate with zero sync step.
+- **EMPIRICAL:** `@imports` do NOT expand inside agent definition bodies — never rely on
+  an `@import` working inside an agent's own `.md` file, only in CLAUDE.md/rules files.
+- `Agent(a, b)` spawn lists in frontmatter are behavioral contracts, not enforced by
+  Claude Code for subagents.
+- Hard cap: `fleet-map.md` stays ≤ ~90 lines; detail lives in `sdm-playbook.md` /
+  `sde-support.md` / `ROSTER.md`.
+
+## agent-smith — the self-extending fleet
+
+**Trigger mandate:** any Fable orchestrator that sees a recurring task shape or a
+missing capability MUST spawn `agent-smith` — mandatory for orchestrators, and
+available to users directly via `/new-agent`.
+
+**Pipeline:** `agent-smith` designs the new agent (role, tier, tools, skills) →
+`agent-forge` installs it via `config-editor` leaves (agent file, roster row, any
+skill/template wiring) → lint + a headless probe verify it → report back. New agents
+become available starting **next session**, not the one that created them.
+
+Templates for new agents live in `~/.claude/templates/agents/`.
+
+## Liveliness protocol
+
+Five channels keep the terminal from looking dead while work is delegated:
+1. **Hooks** — `SubagentStart`/`SubagentStop` fire `~/.claude/hooks/subagent-liveliness.sh`,
+   which emits systemMessage pings and maintains `~/.claude/state/subagents-live.json`.
+2. **Statusline** — `~/.claude/statusline.sh` refreshes on an interval and renders the
+   live agent count/names from that state file.
+3. **Orchestrator narration** — one line per spawn/result/gate (`▶ started:` / `✔ done:` /
+   `⟳ gate:`), surfaced by orchestrators every wave.
+4. **Native task board** — `TaskCreate`/`TaskUpdate` with `blockedBy`, watched via Ctrl+T;
+   never a hand-rolled markdown checklist.
+5. **Report contract** — every agent's final report leads with
+   `STATUS: ok|partial|blocked — <one line>` then a `TIMELINE:` block.
+
+Wiring lives in `~/.claude/settings.json` (hooks config) +
+`~/.claude/hooks/subagent-liveliness.sh` + `~/.claude/statusline.sh`. Full protocol:
+`rosters/liveliness.md` (preloaded via the `liveliness` skill).
 
 ## The pipeline (how a feature/product gets built)
 
@@ -101,6 +148,16 @@ whole pipeline out of the main conversation.
   mechanical text transforms. Never for decisions, code, or anything needing
   current knowledge. If the gateway is down (or you never set one up), fall
   back to `distiller` (Haiku).
+
+### Frontmatter conventions (2.1.212)
+- **Effort** per tier: haiku utility agents = `low`; fable orchestrators = `high`;
+  everything else defaults to `inherit`.
+- **Color** per tier: purple (fable), blue (opus), green (sonnet dev/config — coder,
+  config-editor, context-keeper), orange (sonnet infra/business-domain ops — git-ops,
+  plus any domain agents you add from `domain-agent-template.md`), cyan (haiku).
+- Subagents run **background by default**; spawn depth cap is **5**; session cap is
+  **~200 spawns** (`CLAUDE_CODE_MAX_SUBAGENTS_PER_SESSION`).
+- `MEMORY.md` hard limits: **200 lines / 25KB** — trim before either is hit.
 
 ## MCP servers
 

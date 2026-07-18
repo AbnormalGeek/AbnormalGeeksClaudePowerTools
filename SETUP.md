@@ -25,12 +25,17 @@ Run each check. If one fails, fix it (with the user's help where needed) before 
 claude --version        # Claude Code installed (you are proof, but capture the version)
 gh auth status          # GitHub CLI authenticated — required (this repo is private)
 git --version           # git present
-jq --version            # jq present — REQUIRED: statusline.sh and the Notification hook use it
+jq --version            # jq present — REQUIRED: statusline.sh, the Notification hook, and
+                        #   the SubagentStart/Stop liveliness hook all use it
+flock --version         # part of util-linux — REQUIRED by the liveliness hook's state-file lock
 node --version          # Node.js present — required for the playwright MCP server (npx) in Step 3
 uname -s                # OS: Linux or Darwin — note which, some steps mention differences
 ```
 
 - If `jq` is missing, install it via the system package manager (may need the user for sudo).
+- If `flock` is missing (rare — it ships with `util-linux` on virtually every Linux distro;
+  on macOS `brew install util-linux`), the liveliness hook still degrades gracefully (it exits
+  silently rather than blocking a spawn), but agent activity won't show in the statusline.
 - If `node` (and with it `npx`) is missing, install it via the system package manager or nvm —
   or, if the user doesn't want Node, skip the playwright registration in Step 3 and tell them
   it can be added later.
@@ -60,13 +65,20 @@ Run it — dry-run first, review the plan, then for real:
 ./install.sh             # perform the install
 ```
 
+The real run now prints the resolved target (e.g. `Installing to: ~/.claude`) and asks
+for a y/N confirmation before writing anything — answer `y`, or use `./install.sh --yes`
+if your Bash tool isn't attached to a TTY (a non-interactive run without `--yes` aborts
+instead of hanging).
+
 **Verify:**
 
 ```bash
 jq . ~/.claude/settings.json > /dev/null && echo settings-valid
 grep -c __HOME__ ~/.claude/settings.json   # expect: 0 (placeholder fully replaced)
 test -x ~/.claude/statusline.sh && echo statusline-executable
-ls ~/.claude/agents ~/.claude/commands ~/.claude/skills ~/.claude/rules
+find ~/.claude/hooks -maxdepth 1 -name '*.sh' -perm -u+x   # expect: subagent-liveliness.sh listed
+ls ~/.claude/agents ~/.claude/commands ~/.claude/skills ~/.claude/rules \
+   ~/.claude/rosters ~/.claude/templates/agents
 ```
 
 **If a backup directory was created** (installer summary says so): for each file in
@@ -108,8 +120,11 @@ claude mcp list   # expect: context7 and playwright listed, status connected/ava
 ## Step 4 — Make ~/.claude a git repo
 
 The installed `~/.claude/.gitignore` is allowlist-style: it ignores everything, then
-un-ignores just the durable config (CLAUDE.md, settings.json, agents, commands, rules,
-skills, statusline, planning). Sessions, credentials, caches stay untracked.
+un-ignores just the durable config it lists explicitly. Sessions, credentials, caches
+stay untracked. **Before running `git add -A` below, diff `~/.claude/.gitignore` against
+what actually landed in Step 1** (`ls ~/.claude`) — if `rosters/`, `templates/`, or `hooks/`
+exist but aren't un-ignored, add `!/rosters`, `!/templates`, `!/hooks` lines before staging,
+or those directories silently won't be tracked.
 
 ```bash
 cd ~/.claude
@@ -146,20 +161,33 @@ Run all of these; every line must pass:
 ```bash
 jq . ~/.claude/settings.json > /dev/null && echo OK-settings
 jq -r '.model' ~/.claude/settings.json                       # expect: claude-fable-5[1m]
-ls ~/.claude/agents/*.md | wc -l                             # expect: 7 (6 agents + domain template)
-ls ~/.claude/skills/                                         # expect: setup-project spec-new spec-run spec-status
+ls ~/.claude/agents/*.md | wc -l                             # expect: 18 files (17 runnable agents +
+                                                              #   domain-agent-template.md, which has no
+                                                              #   frontmatter by design — it's a template,
+                                                              #   not something Claude Code loads as an agent)
+ls ~/.claude/skills/    # expect 8: liveliness new-agent roster-sdm roster-sde
+                        #   setup-project spec-new spec-run spec-status
+ls ~/.claude/rosters/   # expect 4: fleet-map.md liveliness.md sdm-playbook.md sde-support.md
+ls ~/.claude/templates/agents/   # expect 4: orchestrator.md dev.md utility.md ops-specialist.md
+find ~/.claude/hooks -name '*.sh' -perm -u+x | wc -l   # expect: 1+ (subagent-liveliness.sh executable)
 ls ~/.claude/commands/                                       # expect: ci-check.md sync-config.md
 echo '{"model":{"display_name":"Test"},"workspace":{"current_dir":"'"$HOME"'"}}' \
   | ~/.claude/statusline.sh; echo                            # expect: "Test | <dir>" with colors
-claude mcp list                                              # expect: context7, playwright
+claude mcp list                                              # expect: context7, playwright — doc-fetcher
+                                                              #   (agents/doc-fetcher.md) expects context7 too
 git -C ~/.claude status --porcelain                          # expect: empty (clean)
 ```
 
 Then have the user start a fresh `claude` session in `~/ai_workspace` and check:
 
 - `/status` shows the expected model
-- `/agents` lists project-manager, researcher, coder, distiller, validator, context-keeper
-- The statusline renders at the bottom of the terminal
+- `/agents` lists all 17 runnable agents (`project-manager`, `agent-smith`, `researcher`,
+  `agent-forge`, `coder`, `java-dev`, `python-dev`, `ts-dev`, `git-ops`, `config-editor`,
+  `context-keeper`, `validator`, `distiller`, `web-fetcher`, `log-analyzer`, `repo-scout`,
+  `doc-fetcher`) — `domain-agent-template.md` deliberately has no frontmatter, so it won't
+  appear here; copy it to create your own domain specialist (see how-it-works.md)
+- The statusline renders at the bottom of the terminal, and shows live agent activity once
+  you spawn a subagent (the `SubagentStart`/`SubagentStop` hook + statusline liveliness channel)
 
 ## What to try first
 

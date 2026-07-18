@@ -15,7 +15,13 @@
       "Bash(gh pr merge:*)",
       "Read(//__HOME__/.claude/planning/**)",
       "Edit(//__HOME__/.claude/planning/**)",
-      "Write(//__HOME__/.claude/planning/**)"
+      "Read(//__HOME__/.claude/rosters/**)",
+      "Edit(//__HOME__/.claude/rosters/**)",
+      "Read(//__HOME__/.claude/templates/**)",
+      "Edit(//__HOME__/.claude/templates/**)",
+      "Edit(//__HOME__/.claude/agents/**)",
+      "Edit(//__HOME__/.claude/skills/**)",
+      "Edit(//__HOME__/.claude/state/**)"
     ],
     "deny": [
       "Read(.env)",
@@ -42,11 +48,36 @@
           }
         ]
       }
+    ],
+    "SubagentStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/subagent-liveliness.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/subagent-liveliness.sh",
+            "timeout": 10
+          }
+        ]
+      }
     ]
   },
   "statusLine": {
     "type": "command",
-    "command": "~/.claude/statusline.sh"
+    "command": "~/.claude/statusline.sh",
+    "refreshInterval": 1000
   },
   "autoMemoryEnabled": true
 }

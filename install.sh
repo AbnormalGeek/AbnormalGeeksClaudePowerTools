@@ -3,26 +3,40 @@
 #
 # What it does (idempotent, no sudo):
 #   1. Copies claude-config/          -> ~/.claude/        (backs up any file it would change)
+#      This is a full recursive copy — agents/, skills/, rosters/, templates/, hooks/,
+#      rules/, commands/, planning/ all ride along automatically. Adding a new
+#      subdirectory to claude-config/ needs no installer change.
 #   2. Copies ai-workspace-template/  -> ~/ai_workspace/   (never overwrites existing files)
 #   3. Replaces the __HOME__ placeholder in the installed ~/.claude/settings.json
-#   4. Makes ~/.claude/statusline.sh executable
+#   4. Makes ~/.claude/statusline.sh and ~/.claude/hooks/*.sh executable
 #
 # It NEVER touches ~/.claude/settings.local.json, credentials, sessions, or projects.
 # Backups of anything overwritten go to ~/.claude.backup-<UTC timestamp>/ (mirrored paths).
 #
+# Non-dry-run mode prints the resolved install target first, then requires confirmation
+# before writing anything: pass --yes, or type y/Y at the prompt if stdin is a TTY. A
+# non-interactive run (no TTY) without --yes aborts (exit 1) before touching disk — this
+# is the guard against an automated/scripted invocation silently installing over a real
+# HOME (e.g. a smoke test that forgot to override HOME).
+#
 # Usage:
-#   ./install.sh            perform the install
-#   ./install.sh --dry-run  print every action without executing anything
+#   ./install.sh             perform the install (prompts y/N if stdin is a TTY)
+#   ./install.sh --yes       perform the install without prompting (required for
+#                            non-interactive/scripted/CI use — no TTY means no prompt)
+#   ./install.sh --dry-run   print every action without executing anything (never
+#                            prompts, --yes not needed)
 set -euo pipefail
 
 usage() {
-  sed -n '2,15p' "$0"
+  sed -n '2,27p' "$0"
 }
 
 DRY_RUN=0
+ASSUME_YES=0
 for arg in "$@"; do
   case "$arg" in
     --dry-run) DRY_RUN=1 ;;
+    --yes) ASSUME_YES=1 ;;
     -h|--help) usage; exit 0 ;;
     *) printf 'Unknown argument: %s\n' "$arg" >&2; usage >&2; exit 2 ;;
   esac
@@ -47,6 +61,32 @@ fail() { printf 'ERROR: %s\n' "$*" >&2; exit 1; }
 
 [ -d "$CLAUDE_SRC" ] || fail "missing $CLAUDE_SRC — run from a full checkout of the repo"
 [ -d "$WORKSPACE_SRC" ] || fail "missing $WORKSPACE_SRC — run from a full checkout of the repo"
+
+# confirm_target: guard against an accidental live-HOME install. Dry runs are exempt
+# (nothing is written). For a real run, print the resolved target prominently, then
+# require --yes or an explicit y/Y at an interactive (TTY) prompt. A non-interactive
+# invocation without --yes aborts before anything is written — this is the case that
+# protects against a scripted/automated caller that forgot to override HOME.
+confirm_target() {
+  [ "$DRY_RUN" -eq 1 ] && return 0
+
+  say "Installing to: $CLAUDE_DEST"
+  say "  (and $WORKSPACE_DEST for the workspace template)"
+  say ""
+
+  [ "$ASSUME_YES" -eq 1 ] && return 0
+
+  if [ -t 0 ]; then
+    printf 'Proceed? [y/N] '
+    read -r reply
+    case "$reply" in
+      y|Y) return 0 ;;
+      *) fail "aborted — nothing was written" ;;
+    esac
+  else
+    fail "refusing to install non-interactively without confirmation — re-run with --yes"
+  fi
+}
 
 # backup_file <existing-dest-file> <repo-relative-path>
 # Mirrors the file into $BACKUP_DIR before it gets overwritten.
@@ -133,6 +173,8 @@ say "== AbnormalGeeksClaudePowerTools installer =="
 [ "$DRY_RUN" -eq 1 ] && say "(dry run — nothing will be written)"
 say ""
 
+confirm_target
+
 say "-- claude-config/ -> $CLAUDE_DEST"
 install_claude_config
 say ""
@@ -145,6 +187,19 @@ if [ "$DRY_RUN" -eq 1 ]; then
 elif [ -f "$CLAUDE_DEST/statusline.sh" ]; then
   chmod +x "$CLAUDE_DEST/statusline.sh"
   say "chmod +x $CLAUDE_DEST/statusline.sh"
+fi
+
+if [ -d "$CLAUDE_SRC/hooks" ]; then
+  while IFS= read -r -d '' hook; do
+    hook_rel="${hook#"$CLAUDE_SRC"/}"
+    hook_dest="$CLAUDE_DEST/$hook_rel"
+    if [ "$DRY_RUN" -eq 1 ]; then
+      say "[dry-run] chmod +x $hook_dest"
+    else
+      chmod +x "$hook_dest"
+      say "chmod +x $hook_dest"
+    fi
+  done < <(find "$CLAUDE_SRC/hooks" -maxdepth 1 -type f -name '*.sh' -print0)
 fi
 
 say ""
@@ -163,3 +218,6 @@ say "     claude mcp add --scope user --transport http context7 https://mcp.cont
 say "     claude mcp add --scope user playwright -- npx @playwright/mcp@latest"
 say "3. Make ~/.claude a git repo (SETUP.md step 4) so /sync-config can version your setup."
 say "4. Verify: jq . ~/.claude/settings.json && claude mcp list"
+say "5. Confirm the fleet landed (SETUP.md has exact counts): ls ~/.claude/agents | wc -l,"
+say "     ls ~/.claude/skills, ls ~/.claude/rosters, ls ~/.claude/templates/agents,"
+say "     and that ~/.claude/hooks/*.sh are executable (this installer already chmod'd them)."

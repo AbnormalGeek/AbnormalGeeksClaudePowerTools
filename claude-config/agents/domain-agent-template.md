@@ -38,6 +38,15 @@ tools: Bash, Read, Write, Edit, Grep, Glob
 # domain work, haiku for pure lookup/report agents. Aliases resolve to the
 # latest version of the tier; don't pin full model IDs.
 model: sonnet
+# color: ops-specialist convention — orange marks "domain operator" in the
+# fleet map / statusline at a glance. Change it only if orange is already
+# claimed by something unrelated in your roster.
+color: orange
+# skills: liveliness wires this agent into the report contract (STATUS/TIMELINE
+# lines, task-board updates) so orchestrators and the user can see it working.
+# Keep it unless this agent is a pure one-shot lookup with no multi-step work.
+skills:
+  - liveliness
 ---
 
 You are <role — one sentence: who this agent is and what it operates>.
