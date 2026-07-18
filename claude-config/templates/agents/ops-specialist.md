@@ -17,8 +17,8 @@ skills:
      aren't orchestrators or generalist dev leaves. -->
 tools: {{TOOLS}}{{SPAWN_EDGES}}
 <!-- agent-smith: TOOLS — least-privilege for the domain — typically Bash, Read, Grep,
-     Glob plus the domain's MCP server(s) (e.g. mcp__unifi-network-read,
-     mcp__unifi-network-write; mcp__cloudflare). Split read/write MCP servers if the
+     Glob plus the domain's MCP server(s) (e.g. mcp__mydb-read,
+     mcp__mydb-write; mcp__github). Split read/write MCP servers if the
      domain supports it — don't grant a single over-privileged credential when a
      read-only one exists.
      SPAWN_EDGES — usually none: ops-specialists are leaves in the fleet, not spawners.

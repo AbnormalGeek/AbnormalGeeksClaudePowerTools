@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# .githooks/pre-push — standing leak guard, wired via:
+#   git config core.hooksPath .githooks
+#
+# Runs tools/leak-check.sh in tree mode (working tree, not full history —
+# fast enough to run on every push) and blocks the push if it finds any
+# non-allowlisted personal/homelab content or credential-shaped string.
+set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+LEAK_CHECK="$REPO_ROOT/tools/leak-check.sh"
+
+if [[ ! -x "$LEAK_CHECK" ]]; then
+  echo "pre-push: tools/leak-check.sh missing or not executable — skipping leak check" >&2
+  exit 0
+fi
+
+if ! "$LEAK_CHECK"; then
+  echo "" >&2
+  echo "pre-push BLOCKED: leak-check found personal/homelab content or credential-shaped strings above." >&2
+  echo "Fix the flagged lines (or extend the allowlist in tools/leak-check.sh if it's a false positive)," >&2
+  echo "then push again. To bypass in a genuine emergency: git push --no-verify (avoid if possible)." >&2
+  exit 1
+fi
+
+exit 0

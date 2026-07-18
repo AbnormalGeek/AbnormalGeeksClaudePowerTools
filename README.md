@@ -29,6 +29,44 @@ The fleet went from a fixed roster to a **self-extending web**:
   job — so long delegated runs never look stalled.
 - Full write-up: [docs/how-it-works.md](docs/how-it-works.md).
 
+## How you use it (day to day)
+
+You do not drive this with slash commands. After setup you describe what you want in
+plain language, and the installed context does the routing: every session opens as an
+orchestrator. Coding routes to the Sonnet dev tier (`java-dev`, `python-dev`, `ts-dev`,
+or the generalist `coder`), research routes to `researcher`, and bulk input (web pages,
+logs, repo sweeps, library docs) routes to the Haiku utility tier. Git mechanics route
+to `git-ops`. The fleet map loads into every session and every subagent, so this
+routing knowledge is always present, not something you have to remember or ask for.
+
+While it works, you will see three things: one-line narration for each delegated step
+(`▶ started`, `✔ done`, `⟳ gate`), a live task board (`Ctrl+T`), and a statusline
+counter showing active agents. The `SubagentStart`/`SubagentStop` hooks that drive this
+ship enabled in `settings.json`, so there is nothing to turn on.
+
+The fleet also grows itself. When a task shape keeps recurring, the orchestrator's
+standing instruction is to invoke `agent-smith`, which designs and installs a new
+specialist for the next session. You can trigger the same thing directly with
+`/new-agent`, or copy `domain-agent-template` to stand up your own domain specialist
+by hand.
+
+### Optional guided flows
+
+None of these are required. They exist for when you want a structured entry point
+instead of describing the goal in plain language.
+
+| Command | What it gives you |
+|---------|--------------------|
+| `/new-agent` | Adds a new specialist to the fleet |
+| `/setup-project` | Drops the per-project rules into a repo |
+| `/spec-new`, `/spec-run`, `/spec-status` | Spec-driven feature pipeline: create, run, and check the status of a spec |
+| `/ci-check` | Watches CI on the current repo until it goes green |
+| `/sync-config` | Commits your `~/.claude` config |
+| `/powertools-update` | Pulls the latest PowerTools and re-installs, with review |
+
+Contributors: run `tools/leak-check.sh` before pushing. A pre-push hook enforces it via
+`git config core.hooksPath .githooks`.
+
 ## Install: the one-liner
 
 This is a **private repo**. Before running the one-liner you need:

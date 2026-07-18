@@ -207,3 +207,10 @@ Suggest these to the user, in order:
 When everything above passes, tell the user setup is complete and summarize: what was
 installed, what was backed up (if anything), what was merged, and the three "try first"
 actions.
+
+## Later: updating
+
+To pick up new fleet agents, skills, or rules after this initial setup, run
+`/powertools-update`, or `git pull` in the cloned repo and re-run `install.sh`. Either
+way, the installer backs up anything it would overwrite and confirms before writing,
+the same as the first run.
