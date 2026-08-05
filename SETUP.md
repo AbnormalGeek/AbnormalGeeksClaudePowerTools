@@ -79,6 +79,8 @@ test -x ~/.claude/statusline.sh && echo statusline-executable
 find ~/.claude/hooks -maxdepth 1 -name '*.sh' -perm -u+x   # expect: subagent-liveliness.sh listed
 ls ~/.claude/agents ~/.claude/commands ~/.claude/skills ~/.claude/rules \
    ~/.claude/rosters ~/.claude/templates/agents
+test -d ~/.claude/context && echo context-installed        # doctrine slices + persona manifests
+test -d ~/.claude/context-local && echo context-local-created   # private overlay, created empty
 ```
 
 **If a backup directory was created** (installer summary says so): for each file in
@@ -213,4 +215,6 @@ actions.
 To pick up new fleet agents, skills, or rules after this initial setup, run
 `/powertools-update`, or `git pull` in the cloned repo and re-run `install.sh`. Either
 way, the installer backs up anything it would overwrite and confirms before writing,
-the same as the first run.
+the same as the first run. Persona loader skills (`persona-*`) regenerate in-repo via
+`tools/gen-persona-skills.sh` as part of the repo's own maintenance, so a user only
+ever needs to pull and reinstall, never run the generator themselves.

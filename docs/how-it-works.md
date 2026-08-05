@@ -95,6 +95,56 @@ this with **live loading**, not sync scripts:
   genuinely load-bearing, the real enforcement point is `permissions.deny` in settings, and the
   agent's doc comment should say so.
 
+## The context library and personas
+
+Agent prompts accumulate copy-pasted doctrine over time: the same testing philosophy, the same
+review checklist, the same tone guide, repeated across a dozen files. `claude-config/context/`
+gives that doctrine one home instead of a dozen copies. It holds two kinds of file:
+
+- **Slices** (`context/skills/<category>/<slice>.md`): one doctrine concern per file, always a
+  leaf (a slice never references another slice; a dependency between concerns belongs in a
+  persona manifest instead).
+- **Personas** (`context/personas/<group>/<persona>.md`): a thin manifest that lists the slices
+  one role actually needs, in load order, plus a short role summary.
+
+The manifest format, naming rules, and the full slice/persona catalog live in
+[claude-config/context/README.md](../claude-config/context/README.md) and
+[claude-config/context/INDEX.md](../claude-config/context/INDEX.md); this section covers only why
+the system is shaped the way it is.
+
+**Why a generated loader skill, not a direct `@import`.** The roster web section above
+established the empirical fact that `@import` only expands inside the CLAUDE.md/rules-file
+import chain, never inside an agent definition body. Personas hit the same wall: an agent can't
+`@import` a persona manifest directly. `tools/gen-persona-skills.sh` bridges the gap by reading
+each manifest's frontmatter `slices:` list and emitting a `persona-<group>-<persona>` loader
+skill under `claude-config/skills/`, in the same live-loading shape as the
+`roster-sdm`/`roster-sde`/`liveliness` skills: the generated skill's body is a single `` !`cat` ``
+line that reads the slice files straight from `~/.claude/context/` at invocation time, not a
+frozen copy. An agent picks up a persona by listing that generated skill's name in its own
+frontmatter `skills:` list.
+
+**Dual consumption, one manifest.** A persona is written once and read two different ways:
+
+1. **Session-level**, via `@import`: a `CLAUDE.md` or rules file can `@import` a persona
+   manifest directly, and the manifest's own `@` lines then pull in each slice in turn. This
+   works precisely because CLAUDE.md/rules files are where Claude Code's import walk runs.
+2. **Agent-level**, via the generated loader skill described above, for agent definition bodies,
+   where `@import` doesn't expand.
+
+All 17 shipped agents compose their role-specific prose with a persona this way, rather than
+inlining shared doctrine by hand into each agent file.
+
+**The private overlay: `~/.claude/context-local/`.** The installer creates this directory empty,
+and this repo never ships content into it. It mirrors the same
+`skills/<category>/<slice>.md` and `personas/<group>/<persona>.md` layout, for doctrine that's
+private or site-specific and has no business in a public repo. If you keep `~/.claude` itself
+under version control, add `context-local/` to that repo's `.gitignore` too.
+
+**Regeneration workflow.** Edit a slice or manifest under `context/`, run
+`tools/gen-persona-skills.sh` from the repo root, and commit the source edit together with the
+skill(s) it regenerates. Generated skills carry an `AUTO-GENERATED` marker in their own header;
+hand-editing one is a mistake the next regeneration will overwrite.
+
 ## agent-smith — the fleet's self-extension mechanism
 
 `agent-smith` (Fable) is the only agent that changes the fleet's shape. It designs; a paired

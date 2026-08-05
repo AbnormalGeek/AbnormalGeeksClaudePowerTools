@@ -22,4 +22,11 @@ Update the PowerTools harness and re-sync it into the live ~/.claude.
    manual re-merge from that backup, since the installer does not merge them
    automatically. Walk the user through any conflicts by diffing the backup
    against the freshly installed file.
-9. Finish by offering to run `/sync-config` to commit the user's `~/.claude`.
+9. Note for the user: `context/` doctrine slices and personas, and the generated
+   `persona-*` loader skills, update along with the rest of the repo, no separate
+   step needed. `~/.claude/context-local/` is the private overlay and install never
+   touches it. If the user maintains their own personas there, or keeps a fork with
+   custom slices/manifests, remind them to rerun `tools/gen-persona-skills.sh` from
+   their own clone after editing, since this repo's generator only regenerates the
+   skills shipped here.
+10. Finish by offering to run `/sync-config` to commit the user's `~/.claude`.

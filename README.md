@@ -136,6 +136,15 @@ Full detail in [docs/how-it-works.md](docs/how-it-works.md).
    and a `STATUS:`/`TIMELINE:` report contract from every agent.
 8. **Memory habits** persist durable facts across sessions: an auto-memory `MEMORY.md` index
    plus one-topic-per-file notes, so no session re-learns what a previous one verified.
+9. **A context library backs dev-tier agents with shared doctrine.** `claude-config/context/`
+   holds small, reusable doctrine slices (testing philosophy, review checklists, tone guides)
+   grouped into named personas, instead of the same text being copy-pasted into every agent
+   file. `tools/gen-persona-skills.sh` turns each persona manifest into an auto-generated
+   `persona-<group>-<persona>` loader skill that pulls its slices live from `~/.claude/context/`
+   at spawn time, the same pattern `roster-sdm`/`roster-sde`/`liveliness` already use (needed
+   because `@import` never expands inside an agent definition body). All 17 shipped agents
+   compose their role-specific prose with a persona this way. Full detail:
+   [claude-config/context/README.md](claude-config/context/README.md).
 
 ## MCP servers
 
@@ -158,14 +167,16 @@ The repo touches exactly two locations:
 
 | Source | Destination | Contents |
 |--------|-------------|----------|
-| `claude-config/` | `~/.claude/` | `CLAUDE.md`, `settings.json`, `statusline.sh`, `agents/`, `commands/`, `rules/`, `skills/`, `rosters/`, `templates/`, `hooks/`, `planning/`, `.gitignore` |
+| `claude-config/` | `~/.claude/` | `CLAUDE.md`, `settings.json`, `statusline.sh`, `agents/`, `commands/`, `rules/`, `skills/` (including the auto-generated `persona-*` loader skills), `rosters/`, `templates/`, `hooks/`, `planning/`, `context/` (doctrine slices + persona manifests), `.gitignore` |
 | `ai-workspace-template/` | `~/ai_workspace/` | Workspace README + starter `.claude/CLAUDE.md` |
 
 `install.sh` is idempotent, needs no sudo, and **backs up any existing file it would overwrite**
 to `~/.claude.backup-<timestamp>/` before copying — SETUP.md then has Claude diff and merge
 anything meaningful from your previous config rather than losing it. It never touches
 `~/.claude/settings.local.json`, credentials, sessions, or project state. Existing
-`~/ai_workspace` files are skipped, never overwritten.
+`~/ai_workspace` files are skipped, never overwritten. It also creates an empty
+`~/.claude/context-local/` directory: the private overlay for your own site-specific doctrine
+slices and personas, which this repo never ships content into.
 
 After install, `~/.claude` becomes a git repo (an allowlist-style `.gitignore` is included) so
 your config is versioned; the `/sync-config` command commits and pushes changes.
