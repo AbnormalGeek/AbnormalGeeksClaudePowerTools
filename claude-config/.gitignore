@@ -16,6 +16,7 @@
 !/rosters
 !/templates
 !/hooks
+!/context
 
 # Never track machine-local overrides, even inside tracked dirs
 **/settings.local.json
