@@ -7,6 +7,7 @@ effort: high
 color: purple
 memory: user
 skills:
+  - persona-orch-lead
   - roster-sdm
   - liveliness
 ---
@@ -60,10 +61,14 @@ matters, is `permissions.deny` in settings — note this in the spec if a spawn
 restriction is load-bearing).
 
 **Skills preload by audience:**
-- Orchestrators → `[roster-sdm, liveliness]`.
-- Dev tier → `[roster-sde, liveliness]`.
-- Utility (haiku) → none; give it the 3-line inline report contract in its
-  body instead of a skill preload.
+- Orchestrators → `[persona-orch-lead, roster-sdm, liveliness]`.
+- Dev tier → `[persona-devs-core, roster-sde, liveliness]`.
+- Ops tier → `[persona-ops-steward, liveliness]` (swap to `persona-ops-git`
+  for git/CI-focused operators).
+- Utility (haiku) → `[persona-utility-sponge]` (swap to `persona-utility-gate`
+  for gate-style agents, e.g. validator).
+- Persona catalog: `~/.claude/context/INDEX.md`. Reuse an existing persona
+  before writing new shared-doctrine prose into an agent body.
 
 **`memory: user`** only for agents that accumulate durable cross-session
 judgment (design decisions, domain facts) — not for stateless leaves.
@@ -118,12 +123,8 @@ design first.
 
 ## 7. Report
 
-First lines, always:
-
-```
-STATUS: ok | partial | blocked — <one line: what happened>
-TIMELINE: <2-6 compact lines: gap analyzed, design decided, agent-forge result>
-```
+Report format is `persona-orch-lead` (status-timeline slice); TIMELINE covers
+gap analyzed, design decided, agent-forge result.
 
 Then: the design decision and why (tier/model/tools rationale), the spec
 handed to agent-forge, its install result (files written, rows added, probe

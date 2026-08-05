@@ -13,9 +13,10 @@ color: purple
 <!-- agent-smith: fable + effort high + purple is the tier default for orchestration/synthesis.
      Only deviate with a stated reason. -->
 skills:
+  - persona-orch-lead
   - roster-sdm
   - liveliness
-<!-- agent-smith: both are mandatory for this tier — do not drop either. -->
+<!-- agent-smith: all three are mandatory for this tier — do not drop any. -->
 tools: {{TOOLS}}, {{SPAWN_EDGES}}
 <!-- agent-smith: TOOLS — minimal, least-privilege. Orchestrators plan/sequence/gate —
      they rarely need Write/Edit themselves (that's the dev tier's job). Typical: Read,

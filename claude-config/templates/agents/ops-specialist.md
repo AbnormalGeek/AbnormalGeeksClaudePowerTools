@@ -12,9 +12,12 @@ description: {{DESCRIPTION}}
 model: sonnet
 color: orange
 skills:
+  - persona-ops-steward
   - liveliness
-<!-- agent-smith: ops-specialists get liveliness only — no roster-sdm/roster-sde, they
-     aren't orchestrators or generalist dev leaves. -->
+<!-- agent-smith: persona-ops-steward is the default doctrine for this tier
+     (precision-editing + status-timeline); swap to persona-ops-git for
+     git/CI-focused operators (e.g. git-ops). No roster-sdm/roster-sde —
+     ops-specialists aren't orchestrators or generalist dev leaves. -->
 tools: {{TOOLS}}{{SPAWN_EDGES}}
 <!-- agent-smith: TOOLS — least-privilege for the domain — typically Bash, Read, Grep,
      Glob plus the domain's MCP server(s) (e.g. mcp__mydb-read,

@@ -104,3 +104,11 @@ external services.>
   agent that can't confirm its change didn't happen is just guessing.
 - **Record-after-change.** The `context-keeper` handoff is what keeps the rest of
   the fleet's context current; without it, domain agents drift from reality.
+- **Prefer a persona loader over restating shared doctrine.** If the new
+  domain agent's doctrine (verification discipline, report contract,
+  read-only discipline, etc.) matches an existing persona, add its loader
+  skill (`persona-<group>-<name>`) to `skills:` instead of writing that
+  doctrine into the prompt again — check `~/.claude/context/INDEX.md` for the
+  current persona catalog before inventing new prose. Write the doctrine out
+  by hand only when no persona fits; that gap is itself a signal to propose a
+  new persona rather than let every future domain agent restate it.

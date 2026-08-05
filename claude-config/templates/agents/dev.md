@@ -11,9 +11,10 @@ description: {{DESCRIPTION}}
 model: sonnet
 color: green
 skills:
+  - persona-devs-core
   - roster-sde
   - liveliness
-<!-- agent-smith: both mandatory for this tier — do not drop either. -->
+<!-- agent-smith: all three mandatory for this tier — do not drop any. -->
 tools: Read, Write, Edit, Grep, Glob, Bash, ToolSearch, Skill, {{SPAWN_EDGES}}
 <!-- agent-smith: SPAWN_EDGES = Agent(validator, doc-fetcher, web-fetcher, repo-scout,
      log-analyzer, distiller) — the fleet-standard dev support web. Add/remove entries

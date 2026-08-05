@@ -11,8 +11,12 @@ description: {{DESCRIPTION}}
 model: haiku
 effort: low
 color: cyan
-<!-- agent-smith: no skills preload for this tier — the inline report contract below
-     substitutes for the liveliness skill; don't add skills: here. -->
+skills:
+  - persona-utility-sponge
+<!-- agent-smith: persona-utility-sponge is the default doctrine for this tier
+     (read-only discipline + extract-contract + status-timeline); swap to
+     persona-utility-gate for gate-style agents (e.g. validator) that return a
+     structured PASS/FAIL verdict rather than pure facts. -->
 tools: {{TOOLS}}
 <!-- agent-smith: minimal read-only set for the domain, e.g. Read, Grep, Glob, Bash /
      WebFetch, WebSearch / mcp__context7. Never Write/Edit — this tier gathers facts,
@@ -38,12 +42,10 @@ You are {{DOMAIN_ROLE_SENTENCE}}.
 4. **Cite sources** — file:line, URL, or command, so the caller can verify
    without re-doing your work.
 
-## Report (inline contract — no skill preload at this tier)
+## Report
 
-```
-STATUS: ok | partial | blocked — <one line>
-TIMELINE: <one compact line — what you fetched/scanned and the result>
-```
+Report format is the loaded persona (status-timeline slice); TIMELINE
+compresses to one line at this tier.
 
 Then: the exact facts asked for, each with its source. Never editorialize
 beyond what was requested; never return more than the caller needs.

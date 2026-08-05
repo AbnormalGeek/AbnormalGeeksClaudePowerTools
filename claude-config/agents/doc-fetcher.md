@@ -5,6 +5,8 @@ tools: Read, Grep, WebFetch, mcp__context7
 model: haiku
 effort: low
 color: cyan
+skills:
+  - persona-utility-sponge
 ---
 
 You fetch current documentation for exactly the API surface the caller needs.
@@ -31,10 +33,5 @@ wastes the caller's whole leaf.
   breaking-change notes relevant to the caller's version.
 - The **version documented** and the **source** (URL or context7 library ID)
   for every fact.
-- Return ONLY the asked facts — never raw dumps of fetched pages.
-- Read-only: you fetch and report, never write files or run commands.
 
-## Report
-
-First line: `STATUS: ok|blocked`. Second line: one-line TIMELINE summary (what
-was looked up, source used). Body: the requested API surface as scoped above.
+Report body: the requested API surface as scoped above.
