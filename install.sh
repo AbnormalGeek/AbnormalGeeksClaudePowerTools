@@ -178,6 +178,18 @@ confirm_target
 say "-- claude-config/ -> $CLAUDE_DEST"
 install_claude_config
 say ""
+
+# context-local overlay: a user-private directory (same layout as claude-config/context/)
+# that never ships in the repo and is never written to beyond this mkdir -p. Idempotent —
+# re-running never touches existing content inside it.
+if [ "$DRY_RUN" -eq 1 ]; then
+  say "[dry-run] mkdir -p: $CLAUDE_DEST/context-local"
+else
+  mkdir -p "$CLAUDE_DEST/context-local"
+  say "mkdir -p: $CLAUDE_DEST/context-local"
+fi
+say ""
+
 say "-- ai-workspace-template/ -> $WORKSPACE_DEST"
 install_workspace_template
 say ""
@@ -221,3 +233,5 @@ say "4. Verify: jq . ~/.claude/settings.json && claude mcp list"
 say "5. Confirm the fleet landed (SETUP.md has exact counts): ls ~/.claude/agents | wc -l,"
 say "     ls ~/.claude/skills, ls ~/.claude/rosters, ls ~/.claude/templates/agents,"
 say "     and that ~/.claude/hooks/*.sh are executable (this installer already chmod'd them)."
+say "6. ~/.claude/context-local/ is yours: private context slices/personas, never touched"
+say "     by updates. If you version ~/.claude yourself, gitignore it."
