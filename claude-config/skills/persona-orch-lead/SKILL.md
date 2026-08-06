@@ -4,4 +4,4 @@ description: Persona loader — orch/lead: "Orchestration doctrine: delegate eve
 ---
 # Persona: orch/lead (live from ~/.claude/context/, local overlay wins)
 
-!`for f in skills/orchestration/delegation-discipline.md skills/reporting/status-timeline.md; do if [ -f "$HOME/.claude/context-local/$f" ]; then cat "$HOME/.claude/context-local/$f"; else cat "$HOME/.claude/context/$f"; fi; done`
+!`bash ~/.claude/context/resolve-slices.sh skills/orchestration/delegation-discipline.md skills/reporting/status-timeline.md`

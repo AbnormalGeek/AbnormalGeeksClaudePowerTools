@@ -4,4 +4,4 @@ description: Persona loader — ops/domain: Domain-service operators: credential
 ---
 # Persona: ops/domain (live from ~/.claude/context/, local overlay wins)
 
-!`for f in skills/ops/credential-hygiene.md skills/utility/extract-contract.md skills/reporting/status-timeline.md; do if [ -f "$HOME/.claude/context-local/$f" ]; then cat "$HOME/.claude/context-local/$f"; else cat "$HOME/.claude/context/$f"; fi; done`
+!`bash ~/.claude/context/resolve-slices.sh skills/ops/credential-hygiene.md skills/utility/extract-contract.md skills/reporting/status-timeline.md`

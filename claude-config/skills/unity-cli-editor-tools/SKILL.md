@@ -5,4 +5,4 @@ user-invocable: true
 ---
 # Unity editor tools — warm-path contract + catalog (live from ~/.claude/context/, local overlay wins)
 
-!`if [ -f "$HOME/.claude/context-local/skills/unity/editor-tools.md" ]; then cat "$HOME/.claude/context-local/skills/unity/editor-tools.md"; else cat "$HOME/.claude/context/skills/unity/editor-tools.md"; fi`
+!`bash ~/.claude/context/resolve-slices.sh skills/unity/editor-tools.md`

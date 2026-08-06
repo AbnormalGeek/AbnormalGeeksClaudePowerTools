@@ -110,8 +110,9 @@ write_manifest() {
 }
 
 # expected_skill_content <group> <persona> <description> <slice1> [slice2 ...]
-# — mirrors the generator's exact repo-mode output shape (overlay-aware `for`
-# loop loader body), used to assert byte-for-byte.
+# — mirrors the generator's exact repo-mode output shape (single
+# resolve-slices.sh helper call as the loader body), used to assert
+# byte-for-byte.
 expected_skill_content() {
   local group="$1" persona="$2" description="$3"
   shift 3
@@ -123,7 +124,7 @@ description: Persona loader — ${group}/${persona}: ${description} (AUTO-GENERA
 ---
 # Persona: ${group}/${persona} (live from ~/.claude/context/, local overlay wins)
 
-!\`for f in ${slices}; do if [ -f "\$HOME/.claude/context-local/\$f" ]; then cat "\$HOME/.claude/context-local/\$f"; else cat "\$HOME/.claude/context/\$f"; fi; done\`
+!\`bash ~/.claude/context/resolve-slices.sh ${slices}\`
 EOF
 }
 
@@ -158,34 +159,25 @@ write_local_manifest() {
 }
 
 # expected_local_skill_content <group> <persona> <description> <slice1> [slice2 ...]
-# — mirrors the generator's exact --local-mode output shape (explicit
-# if/cat chain, plain entries direct, "shared:" entries overlay-aware).
+# — mirrors the generator's exact --local-mode output shape (single
+# resolve-slices.sh helper call, same as repo mode, with any "shared:"
+# prefix stripped from each slice path before it's passed as an argument).
 expected_local_skill_content() {
   local group="$1" persona="$2" description="$3"
   shift 3
-  local chain="" s stripped seg first=1
+  local s stripped_slices=()
   for s in "$@"; do
-    if [[ "$s" == shared:* ]]; then
-      stripped="${s#shared:}"
-      seg="if [ -f \"\$HOME/.claude/context-local/${stripped}\" ]; then cat \"\$HOME/.claude/context-local/${stripped}\"; else cat \"\$HOME/.claude/context/${stripped}\"; fi"
-    else
-      seg="cat \"\$HOME/.claude/context-local/${s}\""
-    fi
-    if [[ $first -eq 1 ]]; then
-      chain="$seg"
-      first=0
-    else
-      chain="${chain}; ${seg}"
-    fi
+    stripped_slices+=("${s#shared:}")
   done
+  local slices="${stripped_slices[*]}"
   cat <<EOF
 ---
 name: persona-${group}-${persona}
 description: Persona loader — ${group}/${persona}: ${description} (AUTO-GENERATED (local) by tools/gen-persona-skills.sh --local — edit the manifest/slices and regenerate; do not hand-edit)
 ---
-# Persona: ${group}/${persona} (local library; shared: slices fall back to the shared library)
+# Persona: ${group}/${persona} (local library; shared: slices resolve via the shared library overlay)
 
-!\`${chain}\`
+!\`bash ~/.claude/context/resolve-slices.sh ${slices}\`
 EOF
 }
 
@@ -229,11 +221,11 @@ expected2="$(expected_skill_content "review" "lead" "Review lead doctrine slice"
   "skills/review/checklist.md")"
 assert_eq "happy path: review/lead content exact" "$expected2" "$actual2"
 
-# Overlay body correctness — the loader body must match the exact pinned
-# FEATURE 1 for-loop format, byte for byte (independent of the local helper
-# above duplicating the same shape).
-assert_contains "overlay body: exact pinned for-loop format" "$actual1" \
-  '!`for f in skills/testing/core.md skills/testing/props.md; do if [ -f "$HOME/.claude/context-local/$f" ]; then cat "$HOME/.claude/context-local/$f"; else cat "$HOME/.claude/context/$f"; fi; done`'
+# Overlay body correctness — the loader body must be the single, pinned
+# resolve-slices.sh helper call, byte for byte (independent of the local
+# helper above duplicating the same shape).
+assert_contains "overlay body: exact pinned resolve-slices.sh call" "$actual1" \
+  '!`bash ~/.claude/context/resolve-slices.sh skills/testing/core.md skills/testing/props.md`'
 assert_contains "overlay body: header names local overlay" "$actual1" \
   "(live from ~/.claude/context/, local overlay wins)"
 

@@ -5,4 +5,4 @@ user-invocable: true
 ---
 # Unity CLI core contract (live from ~/.claude/context/, local overlay wins)
 
-!`if [ -f "$HOME/.claude/context-local/skills/unity/cli-core.md" ]; then cat "$HOME/.claude/context-local/skills/unity/cli-core.md"; else cat "$HOME/.claude/context/skills/unity/cli-core.md"; fi`
+!`bash ~/.claude/context/resolve-slices.sh skills/unity/cli-core.md`

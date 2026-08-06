@@ -4,4 +4,4 @@ description: Persona loader — devs/unity: Shared doctrine for engine/editor-si
 ---
 # Persona: devs/unity (live from ~/.claude/context/, local overlay wins)
 
-!`for f in skills/code/atomic-leaf.md skills/delegation/bulk-input.md skills/reporting/status-timeline.md; do if [ -f "$HOME/.claude/context-local/$f" ]; then cat "$HOME/.claude/context-local/$f"; else cat "$HOME/.claude/context/$f"; fi; done`
+!`bash ~/.claude/context/resolve-slices.sh skills/code/atomic-leaf.md skills/delegation/bulk-input.md skills/reporting/status-timeline.md`

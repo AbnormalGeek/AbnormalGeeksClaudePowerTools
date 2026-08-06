@@ -5,4 +5,4 @@ user-invocable: true
 ---
 # Unity editor access protocol (live from ~/.claude/context/, local overlay wins)
 
-!`if [ -f "$HOME/.claude/context-local/skills/unity/seat.md" ]; then cat "$HOME/.claude/context-local/skills/unity/seat.md"; else cat "$HOME/.claude/context/skills/unity/seat.md"; fi`
+!`bash ~/.claude/context/resolve-slices.sh skills/unity/seat.md`

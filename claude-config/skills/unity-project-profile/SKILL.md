@@ -5,4 +5,4 @@ user-invocable: true
 ---
 # Unity project profile (live from ~/.claude/context/, local overlay wins)
 
-!`if [ -f "$HOME/.claude/context-local/skills/unity/project-profile.md" ]; then cat "$HOME/.claude/context-local/skills/unity/project-profile.md"; else cat "$HOME/.claude/context/skills/unity/project-profile.md"; fi`
+!`bash ~/.claude/context/resolve-slices.sh skills/unity/project-profile.md`

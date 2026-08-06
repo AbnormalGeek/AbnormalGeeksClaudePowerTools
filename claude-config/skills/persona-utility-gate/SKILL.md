@@ -4,4 +4,4 @@ description: Persona loader — utility/gate: Completion-gate discipline: run re
 ---
 # Persona: utility/gate (live from ~/.claude/context/, local overlay wins)
 
-!`for f in skills/utility/extract-contract.md skills/reporting/status-timeline.md; do if [ -f "$HOME/.claude/context-local/$f" ]; then cat "$HOME/.claude/context-local/$f"; else cat "$HOME/.claude/context/$f"; fi; done`
+!`bash ~/.claude/context/resolve-slices.sh skills/utility/extract-contract.md skills/reporting/status-timeline.md`

@@ -5,4 +5,4 @@ user-invocable: true
 ---
 # Orchestration playbook (live from ~/.claude/context/skills/fleet/sdm-playbook.md)
 
-!`if [ -f "$HOME/.claude/context-local/skills/fleet/sdm-playbook.md" ]; then cat "$HOME/.claude/context-local/skills/fleet/sdm-playbook.md"; else cat "$HOME/.claude/context/skills/fleet/sdm-playbook.md"; fi`
+!`bash ~/.claude/context/resolve-slices.sh skills/fleet/sdm-playbook.md`

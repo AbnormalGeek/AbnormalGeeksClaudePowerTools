@@ -5,4 +5,4 @@ user-invocable: true
 ---
 # Unity validation gates (live from ~/.claude/context/, local overlay wins)
 
-!`if [ -f "$HOME/.claude/context-local/skills/unity/testing.md" ]; then cat "$HOME/.claude/context-local/skills/unity/testing.md"; else cat "$HOME/.claude/context/skills/unity/testing.md"; fi`
+!`bash ~/.claude/context/resolve-slices.sh skills/unity/testing.md`

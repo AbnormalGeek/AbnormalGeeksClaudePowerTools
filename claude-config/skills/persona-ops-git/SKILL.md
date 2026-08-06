@@ -4,4 +4,4 @@ description: Persona loader — ops/git: Git/CI mechanics under the golden rules
 ---
 # Persona: ops/git (live from ~/.claude/context/, local overlay wins)
 
-!`for f in skills/git/golden-rules.md skills/reporting/status-timeline.md; do if [ -f "$HOME/.claude/context-local/$f" ]; then cat "$HOME/.claude/context-local/$f"; else cat "$HOME/.claude/context/$f"; fi; done`
+!`bash ~/.claude/context/resolve-slices.sh skills/git/golden-rules.md skills/reporting/status-timeline.md`

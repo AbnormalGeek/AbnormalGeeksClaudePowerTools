@@ -5,4 +5,4 @@ user-invocable: true
 ---
 # Dev support roster (live from ~/.claude/context/skills/fleet/sde-support.md)
 
-!`if [ -f "$HOME/.claude/context-local/skills/fleet/sde-support.md" ]; then cat "$HOME/.claude/context-local/skills/fleet/sde-support.md"; else cat "$HOME/.claude/context/skills/fleet/sde-support.md"; fi`
+!`bash ~/.claude/context/resolve-slices.sh skills/fleet/sde-support.md`

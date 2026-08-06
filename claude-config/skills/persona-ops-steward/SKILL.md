@@ -4,4 +4,4 @@ description: Persona loader — ops/steward: Precision configuration and context
 ---
 # Persona: ops/steward (live from ~/.claude/context/, local overlay wins)
 
-!`for f in skills/config/precision-editing.md skills/reporting/status-timeline.md; do if [ -f "$HOME/.claude/context-local/$f" ]; then cat "$HOME/.claude/context-local/$f"; else cat "$HOME/.claude/context/$f"; fi; done`
+!`bash ~/.claude/context/resolve-slices.sh skills/config/precision-editing.md skills/reporting/status-timeline.md`
