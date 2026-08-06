@@ -2,7 +2,7 @@
 
 A deeply-iterated **Claude Code agentic development setup**, packaged so you can replicate it
 on your own machine with one command. This is not a starter template — it's a working system
-that has been refined over months of daily use: a **self-extending web** of 18 custom
+that has been refined over months of daily use: a **self-extending web** of 28 custom
 subagents across four model tiers, a research → plan → parallel-implementation → validation
 pipeline, centralized planning conventions, engineering standards that make multi-agent work on
 one codebase safe, a five-channel liveliness stack so the terminal never looks dead mid-run,
@@ -142,7 +142,7 @@ Full detail in [docs/how-it-works.md](docs/how-it-works.md).
    file. `tools/gen-persona-skills.sh` turns each persona manifest into an auto-generated
    `persona-<group>-<persona>` loader skill that pulls its slices live from `~/.claude/context/`
    at spawn time, the same pattern `roster-sdm`/`roster-sde`/`liveliness` already use (needed
-   because `@import` never expands inside an agent definition body). All 17 shipped agents
+   because `@import` never expands inside an agent definition body). All 27 shipped agents
    compose their role-specific prose with a persona this way. Full detail:
    [claude-config/context/README.md](claude-config/context/README.md).
 
@@ -167,7 +167,7 @@ The repo touches exactly two locations:
 
 | Source | Destination | Contents |
 |--------|-------------|----------|
-| `claude-config/` | `~/.claude/` | `CLAUDE.md`, `settings.json`, `statusline.sh`, `agents/`, `commands/`, `rules/`, `skills/` (including the auto-generated `persona-*` loader skills), `rosters/`, `templates/`, `hooks/`, `planning/`, `context/` (doctrine slices + persona manifests), `.gitignore` |
+| `claude-config/` | `~/.claude/` | `CLAUDE.md`, `settings.json`, `statusline.sh`, `agents/` (includes the Unity sub-web: `unity-lead`, `unity-cli`, `unity-code-dev`, `unity-reviewer`, `unity-context-gather`, `unity-asset-dev`, `unity-ui-dev`, `unity-asset-finder`, `unity-asset-finder-online`; plus `sketchfab-ops`), `commands/`, `rules/`, `skills/` (including the auto-generated `persona-*` loader skills), `templates/`, `hooks/`, `planning/`, `context/` (doctrine slices incl. fleet-doctrine `skills/fleet/`, Unity doctrine `skills/unity/`, + persona manifests), `.gitignore` |
 | `ai-workspace-template/` | `~/ai_workspace/` | Workspace README + starter `.claude/CLAUDE.md` |
 
 `install.sh` is idempotent, needs no sudo, and **backs up any existing file it would overwrite**

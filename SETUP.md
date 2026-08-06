@@ -124,8 +124,8 @@ claude mcp list   # expect: context7 and playwright listed, status connected/ava
 The installed `~/.claude/.gitignore` is allowlist-style: it ignores everything, then
 un-ignores just the durable config it lists explicitly. Sessions, credentials, caches
 stay untracked. **Before running `git add -A` below, diff `~/.claude/.gitignore` against
-what actually landed in Step 1** (`ls ~/.claude`) — if `rosters/`, `templates/`, or `hooks/`
-exist but aren't un-ignored, add `!/rosters`, `!/templates`, `!/hooks` lines before staging,
+what actually landed in Step 1** (`ls ~/.claude`). If `templates/` or `hooks/`
+exist but aren't un-ignored, add `!/templates`, `!/hooks` lines before staging,
 or those directories silently won't be tracked.
 
 ```bash
@@ -163,13 +163,17 @@ Run all of these; every line must pass:
 ```bash
 jq . ~/.claude/settings.json > /dev/null && echo OK-settings
 jq -r '.model' ~/.claude/settings.json                       # expect: claude-fable-5[1m]
-ls ~/.claude/agents/*.md | wc -l                             # expect: 18 files (17 runnable agents +
+ls ~/.claude/agents/*.md | wc -l                             # expect: 28 files (27 runnable agents +
                                                               #   domain-agent-template.md, which has no
                                                               #   frontmatter by design — it's a template,
                                                               #   not something Claude Code loads as an agent)
-ls ~/.claude/skills/    # expect 8: liveliness new-agent roster-sdm roster-sde
-                        #   setup-project spec-new spec-run spec-status
-ls ~/.claude/rosters/   # expect 4: fleet-map.md liveliness.md sdm-playbook.md sde-support.md
+ls ~/.claude/skills/    # expect 24: 9 original (liveliness new-agent powertools-update
+                        #   roster-sdm roster-sde setup-project spec-new spec-run
+                        #   spec-status) + 10 persona-* skills, one per persona manifest
+                        #   (e.g. persona-devs-core, persona-utility-scout) + 5 unity-*
+                        #   skills (unity-cli-core, unity-cli-editor-tools, unity-cli-testing,
+                        #   unity-project-profile, unity-seat)
+ls ~/.claude/context/skills/fleet/   # expect 4: fleet-map.md liveliness.md sdm-playbook.md sde-support.md
 ls ~/.claude/templates/agents/   # expect 4: orchestrator.md dev.md utility.md ops-specialist.md
 find ~/.claude/hooks -name '*.sh' -perm -u+x | wc -l   # expect: 1+ (subagent-liveliness.sh executable)
 ls ~/.claude/commands/                                       # expect: ci-check.md sync-config.md
@@ -183,11 +187,14 @@ git -C ~/.claude status --porcelain                          # expect: empty (cl
 Then have the user start a fresh `claude` session in `~/ai_workspace` and check:
 
 - `/status` shows the expected model
-- `/agents` lists all 17 runnable agents (`project-manager`, `agent-smith`, `researcher`,
+- `/agents` lists all 27 runnable agents (`project-manager`, `agent-smith`, `researcher`,
   `agent-forge`, `coder`, `java-dev`, `python-dev`, `ts-dev`, `git-ops`, `config-editor`,
   `context-keeper`, `validator`, `distiller`, `web-fetcher`, `log-analyzer`, `repo-scout`,
-  `doc-fetcher`) — `domain-agent-template.md` deliberately has no frontmatter, so it won't
-  appear here; copy it to create your own domain specialist (see how-it-works.md)
+  `doc-fetcher`, `unity-lead`, `unity-cli`, `unity-code-dev`, `unity-reviewer`,
+  `unity-context-gather`, `unity-asset-dev`, `unity-ui-dev`, `unity-asset-finder`,
+  `unity-asset-finder-online`, `sketchfab-ops`). `domain-agent-template.md` deliberately has no
+  frontmatter, so it won't appear here; copy it to create your own domain specialist (see
+  how-it-works.md)
 - The statusline renders at the bottom of the terminal, and shows live agent activity once
   you spawn a subagent (the `SubagentStart`/`SubagentStop` hook + statusline liveliness channel)
 

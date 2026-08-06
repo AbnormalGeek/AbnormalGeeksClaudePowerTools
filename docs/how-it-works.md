@@ -39,9 +39,9 @@ familiarity:
 
 | Tier | Model | Shape | Shipped agents |
 |------|-------|-------|-----------------|
-| **Orchestrator** | Fable | Orchestration, synthesis, creation | `project-manager`, `agent-smith` |
-| **Specialist** | Opus | Deep research / domain brain | `researcher`, `agent-forge` |
-| **Dev / ops** | Sonnet | Implementation, one atomic leaf | `coder`, `java-dev`, `python-dev`, `ts-dev`, `git-ops`, `config-editor`, `context-keeper`, `domain-agent-template` (a template, not a running agent) |
+| **Orchestrator** | Fable | Orchestration, synthesis, creation | `project-manager`, `agent-smith`, `unity-lead`, `unity-ui-dev` |
+| **Specialist** | Opus | Deep research / domain brain | `researcher`, `agent-forge`, `unity-context-gather` |
+| **Dev / ops** | Sonnet | Implementation, one atomic leaf | `coder`, `java-dev`, `python-dev`, `ts-dev`, `git-ops`, `config-editor`, `context-keeper`, `unity-cli`, `unity-code-dev`, `unity-asset-dev`, `unity-reviewer`, `unity-asset-finder`, `unity-asset-finder-online`, `sketchfab-ops`, `domain-agent-template` (a template, not a running agent) |
 | **Utility** | Haiku | Bulk read / parse / extraction, cheap context shield | `web-fetcher`, `log-analyzer`, `repo-scout`, `doc-fetcher`, `distiller`, `validator` |
 
 Agent frontmatter uses model **aliases** (`fable`, `opus`, `sonnet`, `haiku`) that resolve to
@@ -64,22 +64,23 @@ gap to `agent-smith` and let it design one for you (see below).
 ## The roster web — how agents stay current without drifting
 
 Every agent in the fleet needs to know who else exists and how to delegate, but hard-coding that
-table into 18 separate agent files would drift the moment one agent changed. The system solves
+table into 28 separate agent files would drift the moment one agent changed. The system solves
 this with **live loading**, not sync scripts:
 
 - **Global fleet map, one copy, `@import`ed once.** `~/.claude/CLAUDE.md` contains
-  `@rosters/fleet-map.md` — a single `@import` line. Every session (top-level or subagent)
-  inherits CLAUDE.md, so every context in the web sees the current fleet map with zero
-  per-agent duplication. `rosters/fleet-map.md` itself stays under a ~90-line cap; anything
-  bigger belongs in one of the detail files below it.
+  `@context/skills/fleet/fleet-map.md` (a single `@import` line). Every session (top-level
+  or subagent) inherits CLAUDE.md, so every context in the web sees the current fleet map
+  with zero per-agent duplication. `context/skills/fleet/fleet-map.md` itself stays under
+  a ~90-line cap; anything bigger belongs in one of the detail files below it.
 - **Playbook detail loads per-audience via skills, at invocation time.** Three skills —
   `roster-sdm` (orchestrator playbook), `roster-sde` (dev-agent support roster), and
   `liveliness` (the status-reporting protocol) — are marked `skills:` in the relevant agents'
-  frontmatter, so Claude Code auto-preloads them. Each skill's entire body is one line:
-  `` !`cat ~/.claude/rosters/<file>.md` `` — a **live shell substitution**, not a static copy. The
-  skill re-reads the roster file every time it loads, so there is nothing to keep in sync; edit
-  the roster file once and every agent that preloads that skill sees the edit on its very next
-  invocation.
+  frontmatter, so Claude Code auto-preloads them. Each skill's entire body is one line that
+  prefers a private overlay over the shipped default:
+  `` !`if [ -f "$HOME/.claude/context-local/skills/fleet/<file>.md" ]; then cat "$HOME/.claude/context-local/skills/fleet/<file>.md"; else cat "$HOME/.claude/context/skills/fleet/<file>.md"; fi` ``,
+  a **live shell substitution**, not a static copy. The skill re-reads the doctrine file
+  every time it loads, so there is nothing to keep in sync; edit the file once and every
+  agent that preloads that skill sees the edit on its very next invocation.
 - **EMPIRICAL — `@import` does NOT expand inside agent definition bodies.** This was tested
   directly against Claude Code 2.1.212: an `@path` line placed inside an agent's own `.md` body
   (as opposed to `CLAUDE.md`) stays literal text — the target file's content never appears in
@@ -131,8 +132,19 @@ frontmatter `skills:` list.
 2. **Agent-level**, via the generated loader skill described above, for agent definition bodies,
    where `@import` doesn't expand.
 
-All 17 shipped agents compose their role-specific prose with a persona this way, rather than
+All 27 shipped agents compose their role-specific prose with a persona this way, rather than
 inlining shared doctrine by hand into each agent file.
+
+**The Unity sub-web** (`unity-lead`, `unity-cli`, `unity-code-dev`, `unity-reviewer`,
+`unity-context-gather`, `unity-asset-dev`, `unity-ui-dev`, `unity-asset-finder`,
+`unity-asset-finder-online`, plus `sketchfab-ops` for CC-licensed asset sourcing) ships as a
+worked example of the same context-library pattern applied to a whole domain: its shared
+doctrine lives under `context/skills/unity/` (CLI contract, live editor tool catalog, test-gate
+doctrine, editor seat/concurrency protocol, and a project-profile slice), and its agents compose
+that doctrine through the `devs/unity` persona instead of hard-coding it. The project-profile
+slice is what keeps the sub-web reusable across different Unity projects: an agent resolves the
+target project's path, editor version, and package profile from it, rather than assuming one
+fixed project.
 
 **The private overlay: `~/.claude/context-local/`.** The installer creates this directory empty,
 and this repo never ships content into it. It mirrors the same
@@ -163,7 +175,8 @@ states it as delegation rule #4. Anyone can invoke it directly with the `/new-ag
 skill, which spawns `agent-smith` with your gap report and relays its design decisions back
 (tier, model, tools, roster placement) once `agent-forge` has installed the result.
 
-**Pipeline:** gap report in → `agent-smith` reads `ROSTER.md` and `fleet-map.md`, picks a tier by
+**Pipeline:** gap report in → `agent-smith` reads `ROSTER.md` (private overlay,
+`~/.claude/context-local/skills/fleet/ROSTER.md`, never the shipped repo) and `fleet-map.md`, picks a tier by
 task shape (using the same four-tier table above), designs least-privilege tools and a
 `skills:` preload appropriate to the tier, and starts from the matching
 `~/.claude/templates/agents/<tier>.md` template → hands `agent-forge` a complete spec → the new
