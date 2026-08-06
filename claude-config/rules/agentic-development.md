@@ -7,10 +7,12 @@
 
 ## The fleet (`~/.claude/agents/`)
 
-`~/.claude/rosters/fleet-map.md` is the compact global view, auto-imported into every
-session and subagent via `~/.claude/CLAUDE.md`'s `@import`; `~/.claude/rosters/ROSTER.md`
-is the full registry (model/effort/skills per agent). Both are maintained by
-**agent-smith** (design) and **agent-forge** (install) as the fleet grows.
+`~/.claude/context/skills/fleet/fleet-map.md` is the compact global view, auto-imported
+into every session and subagent via `~/.claude/CLAUDE.md`'s `@import`;
+`~/.claude/context-local/skills/fleet/ROSTER.md` is the full registry (model/effort/skills
+per agent). It lives in the private overlay, not the shipped repo, because it is
+user-runtime content `agent-forge` writes, and updates must never touch it. Both are
+maintained by **agent-smith** (design) and **agent-forge** (install) as the fleet grows.
 
 Tier philosophy: **fable** = orchestration & synthesis (decompose, plan, gate, spawn
 agent-smith on gaps); **opus** = deep specialists (research, domain admin, the
@@ -28,18 +30,20 @@ duplicate global context in agent prompts.
 
 ## The roster & context web (v2)
 
-- `~/.claude/CLAUDE.md` `@imports rosters/fleet-map.md` — combined with the full
-  CLAUDE.md/memory hierarchy being auto-inherited by every subagent, the fleet map
+- `~/.claude/CLAUDE.md` `@imports context/skills/fleet/fleet-map.md` — combined with the
+  full CLAUDE.md/memory hierarchy being auto-inherited by every subagent, the fleet map
   reaches every context in the web with zero manual wiring.
 - Audience playbooks (`roster-sdm`, `roster-sde`, `liveliness`) preload via agent
   frontmatter `skills:` — the full skill content is injected at spawn time, and loader
-  skills `!cat` the roster file live, so edits to the roster propagate with zero sync step.
+  skills `!cat` the doctrine file live (private `context-local/` overlay first, then the
+  shipped `context/` default), so edits propagate with zero sync step.
 - **EMPIRICAL:** `@imports` do NOT expand inside agent definition bodies — never rely on
   an `@import` working inside an agent's own `.md` file, only in CLAUDE.md/rules files.
 - `Agent(a, b)` spawn lists in frontmatter are behavioral contracts, not enforced by
   Claude Code for subagents.
 - Hard cap: `fleet-map.md` stays ≤ ~90 lines; detail lives in `sdm-playbook.md` /
-  `sde-support.md` / `ROSTER.md`.
+  `sde-support.md` under `~/.claude/context/skills/fleet/`, plus `ROSTER.md` under
+  `~/.claude/context-local/skills/fleet/` (private overlay, agent-forge-writable).
 
 ## agent-smith — the self-extending fleet
 
@@ -70,7 +74,7 @@ Five channels keep the terminal from looking dead while work is delegated:
 
 Wiring lives in `~/.claude/settings.json` (hooks config) +
 `~/.claude/hooks/subagent-liveliness.sh` + `~/.claude/statusline.sh`. Full protocol:
-`rosters/liveliness.md` (preloaded via the `liveliness` skill).
+`context/skills/fleet/liveliness.md` (preloaded via the `liveliness` skill).
 
 ## The pipeline (how a feature/product gets built)
 

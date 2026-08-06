@@ -32,8 +32,8 @@ Spawn `config-editor` leaves **in one message**, one leaf per independent file
 - (a) the new agent file at `~/.claude/agents/<name>.md`, filled from
   `~/.claude/templates/agents/<tier>.md` + the SPEC — every placeholder resolved,
   every instructional comment deleted.
-- (b) the `~/.claude/rosters/ROSTER.md` row for the new agent.
-- (c) the `~/.claude/rosters/fleet-map.md` row. Respect its ~90-line cap — if
+- (b) the `~/.claude/context-local/skills/fleet/ROSTER.md` row for the new agent.
+- (c) the `~/.claude/context/skills/fleet/fleet-map.md` row. Respect its ~90-line cap — if
   adding this row would bust it, do NOT let config-editor force it in; report the
   overflow back to `agent-smith` instead (that's a design call, not yours).
 - (d) any playbook mentions the SPEC calls for (e.g. a new delegation-map row).

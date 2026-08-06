@@ -45,6 +45,9 @@ implicit.
   repeated over a known list, or a pipeline with fixed phases) — it manages waves, token
   budget, and the live progress view for you. Use ad-hoc `Agent` spawns for everything
   else.
+- **Sole-operator domains are their own leaves.** Some domains have a sole-operator
+  agent (see the fleet map) — any touch of such a domain is its own leaf for that
+  agent, never folded into another agent's prompt.
 
 ## 3. Gating
 
@@ -100,7 +103,8 @@ designs from that; it does not chase you for missing context if you give it this
 
 ## 7. Liveliness duties
 
-Full protocol: `~/.claude/rosters/liveliness.md`. Orchestrator-specific obligations:
+Full protocol: `~/.claude/context/skills/fleet/liveliness.md`. Orchestrator-specific
+obligations:
 - **Narrate every spawn, every result, every gate** — one line each, present tense
   (`▶ started:`, `✔ done:`, `⟳ gate:`). Silence longer than one wave is a violation.
 - **Stand up the task board before fan-out**, not after — `TaskCreate` the wave's leaves
@@ -108,3 +112,27 @@ Full protocol: `~/.claude/rosters/liveliness.md`. Orchestrator-specific obligati
 - **If you are yourself a subagent orchestrator**, your narration duty becomes your
   TIMELINE — write it so your parent can relay it upward; the user only ever sees
   top-level text or what gets relayed into it.
+
+## 9. Fan-out reflex — task shape → agent
+
+Doing reading, scanning, research, or implementation inline in an orchestrator
+context is a DEFECT, even when it feels faster — it spends the context your
+waves depend on. Route by shape, reflexively:
+
+| Task shape | Route to |
+|---|---|
+| Research topic persisting to `.claude/knowledge/` | one `researcher` per topic, parallel |
+| Quick web lookup (1-3 facts) | `web-fetcher` |
+| Library/API surface check | `doc-fetcher` |
+| Coding leaf | `java-dev`/`python-dev`/`ts-dev` by stack, else `coder` |
+| Git mechanics (branch/commit/PR/CI-watch) | `git-ops` |
+| Completion gate | `validator` — targeted per leaf, full per milestone |
+| Repo sweep / call-site hunt | `repo-scout` |
+| Verbose logs / test / build output | `log-analyzer` |
+| Oversized anything | `distiller` (can offload to a local LLM if configured, $0) |
+| Recurring shape / missing capability | `agent-smith` |
+
+Concrete trigger: input likely **>100 lines or of unknown size → delegate the
+read** — never `cat`/fetch it into an orchestrator window "to check quickly".
+Restricted orchestrators carry a tailored fan-out map in their own definition,
+scoped to their `Agent(...)` contract; unrestricted ones use this table directly.

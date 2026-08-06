@@ -14,6 +14,15 @@
 | **log-analyzer** | Big test/build output you need root-caused instead of reading raw. |
 | **distiller** | Any oversized input (huge file, log, page) you'd otherwise dump into your own context. |
 
+**Bulk-input rule:** if a command's output, file, or page is likely **>100
+lines or of unknown size, delegate the read — don't `cat`/`tail`/fetch it
+inline "to check quickly."** Concretely: verbose test/build output →
+`log-analyzer` (hand it the command to run); web pages → `web-fetcher`;
+library docs → `doc-fetcher`; call-site hunts across more than ~5 files →
+`repo-scout`; oversized anything else → `distiller`. Reading bulk input
+inline in a dev context is a defect, not a shortcut — your window is for
+the leaf.
+
 You normally **cannot** spawn agents unless your frontmatter grants `Agent(...)` tools.
 If you lack that grant, don't guess or fake the lookup yourself — ASK FOR the fact in
 your report's `BLOCKERS:` section instead.
@@ -41,7 +50,7 @@ your report's `BLOCKERS:` section instead.
 
 ## Report
 
-Every final report starts with the liveliness contract (see `~/.claude/rosters/liveliness.md`):
+Every final report starts with the liveliness contract (see `~/.claude/context/skills/fleet/liveliness.md`):
 
 ```
 STATUS: ok | partial | blocked — <one line: what happened>

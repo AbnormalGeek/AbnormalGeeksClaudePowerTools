@@ -42,6 +42,9 @@ Then the body your caller asked for. `BLOCKERS:` section only if status ≠ ok, 
 what you need. Never bury a failure in prose — the STATUS line is where parents and
 users look first. Utility (Haiku) agents may compress TIMELINE to one line.
 
+Barrier and milestone reports name the artifact link when a review artifact exists for
+that surface.
+
 ## Rules of thumb
 
 - Narration lines are ≤1 line each, present tense, no filler ("▶ started: JWT refresh
@@ -49,3 +52,9 @@ users look first. Utility (Haiku) agents may compress TIMELINE to one line.
 - Silence longer than one wave is a protocol violation — if a long-running leaf is
   still going, say so ("⏳ still running: full validation suite, ~2min in").
 - Don't spam: one line per event, not per tool call.
+- **Synchronous finish:** never end a turn while a child agent or background command
+  you started is still running — completion notifications are not guaranteed to wake
+  a subagent, and a stopped agent with live children is a silent dead-end. Anything
+  your report depends on runs to completion IN your turn (spawn children
+  `run_in_background: false`; foreground Bash with timeouts). Your final message is
+  the complete report, never "waiting on X".

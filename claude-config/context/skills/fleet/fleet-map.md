@@ -3,7 +3,8 @@
 > Source of truth for WHO does WHAT. Maintained by **agent-smith** (via agent-forge).
 > Loaded globally: `~/.claude/CLAUDE.md` @imports this file, and every subagent inherits
 > CLAUDE.md — so every context in the web sees this map. HARD CAP ~90 lines; detail
-> belongs in `rosters/sdm-playbook.md`, `rosters/sde-support.md`, `rosters/ROSTER.md`.
+> belongs in `context/skills/fleet/sdm-playbook.md`, `context/skills/fleet/sde-support.md`,
+> `~/.claude/context-local/skills/fleet/ROSTER.md`.
 
 ## Delegation rules (non-negotiable)
 
@@ -24,7 +25,10 @@
    orchestrators; encouraged for everyone. Repetition is a design smell.
 5. **Liveliness.** Narrate delegation as it happens (`▶ started:` / `✔ done:` /
    `⟳ gate:`), keep the native task board current, and honor the report contract in
-   `rosters/liveliness.md`. The user must always see progress.
+   `context/skills/fleet/liveliness.md`. The user must always see progress.
+6. **Sole-operator domains are their own leaves.** Some domains have one designated
+   agent (see the tier tables below) — any touch of that domain, read or write, is a
+   dedicated leaf for its agent, never folded into another agent's prompt.
 
 ## Tiers
 
@@ -33,12 +37,15 @@
 |-------|---------|
 | project-manager | any multi-step feature/product: research → plan → coder waves → gates |
 | agent-smith | designing + installing NEW agents when a gap or recurring pattern appears |
+| unity-lead | any multi-step Unity feature/system: context-gather → plan → dev waves, gated |
+| unity-ui-dev | Unity UI/UX construction with a mandatory screenshot-verify loop (unity sub-web) |
 
 ### Opus — deep specialists
 | agent | use for |
 |-------|---------|
 | researcher | one topic, live-source verified, persists to `.claude/knowledge/` |
 | agent-forge | mechanics of agent creation: fans out config-editors, validates, registers (agent-smith's engine) |
+| unity-context-gather | Unity current-state capture (code/scene/asset/config) into `.claude/knowledge/` (unity sub-web) |
 
 ### Sonnet — implementation & ops
 | agent | use for |
@@ -49,6 +56,9 @@
 | config-editor | `.claude` config, agent-file, roster, and rules surgery (agent-forge's editor) |
 | context-keeper | CLAUDE.md/context/memory upkeep + config-repo git workflow |
 | domain-agent-template | not a running agent — copy + fill in to stand up your own domain specialist (infra, business ops, a cloud service you operate) so that knowledge doesn't live in every session's context |
+| unity-cli | all `unity` binary work: editor lifecycle, live editor tools, batch test/build, package/project ops (unity sub-web) |
+| unity-code-dev / unity-asset-dev / unity-reviewer / unity-asset-finder(-online) | Unity sub-web coding / asset / review / asset-search leaves (unity-lead orchestrates; unity-reviewer gates) |
+| sketchfab-ops | Sketchfab 3D assets: search, CC-license verify, token-auth downloads → quarantine folder |
 
 ### Haiku — utility sponges (cheap context shields; read-only)
 | agent | use for |

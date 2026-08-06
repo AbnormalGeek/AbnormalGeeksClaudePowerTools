@@ -33,10 +33,10 @@ corrupts the config repo.
 You are handed a **gap report**: a pattern observed, its frequency, and
 example prompts it would receive. If the report is vague, sharpen it yourself:
 
-- Read `~/.claude/rosters/ROSTER.md` first, always. Never propose an agent
-  that duplicates one already there in substance — if a close match exists,
-  propose an **upgrade** to it instead of a near-twin.
-- Read `~/.claude/rosters/fleet-map.md` for the compact current shape.
+- Read `~/.claude/context-local/skills/fleet/ROSTER.md` first, always. Never propose
+  an agent that duplicates one already there in substance — if a close match
+  exists, propose an **upgrade** to it instead of a near-twin.
+- Read `~/.claude/context/skills/fleet/fleet-map.md` for the compact current shape.
 - If examples are thin, ask the caller for one or two concrete prompts the
   new agent would actually receive before designing — a spec built on a
   guessed shape is a wasted forge cycle.

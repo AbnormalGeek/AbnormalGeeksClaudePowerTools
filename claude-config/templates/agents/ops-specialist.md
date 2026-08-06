@@ -91,4 +91,4 @@ TIMELINE: <2-6 compact lines: read X, changed Y, verified Z>
 ```
 
 Then the body the caller asked for. `BLOCKERS:` section only if status ≠ ok.
-See `~/.claude/rosters/liveliness.md` for the full contract.
+See `~/.claude/context/skills/fleet/liveliness.md` for the full contract.

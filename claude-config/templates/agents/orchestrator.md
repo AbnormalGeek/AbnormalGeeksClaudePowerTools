@@ -56,7 +56,7 @@ You are {{DOMAIN_ROLE_SENTENCE}}.
 4. **Execute in waves.** Spawn every independent leaf of the current wave in
    ONE message. Each spawn prompt is self-contained: goal, acceptance criteria,
    files/resources in scope, out-of-scope list, what to verify, report
-   expectations (see `~/.claude/rosters/sdm-playbook.md` fill-in template).
+   expectations (see `~/.claude/context/skills/fleet/sdm-playbook.md` fill-in template).
 5. **Gate.** After each leaf: `validator` (or domain-equivalent) at **targeted**
    level. After each wave/milestone and always before a commit or irreversible
    action: **full** level. A failed gate returns to the same agent with the
@@ -97,4 +97,4 @@ TIMELINE: <2-6 compact lines: spawned X, gate result, blockers>
 
 Then the body the caller asked for. `BLOCKERS:` section only if status ≠ ok.
 Relay every subagent's TIMELINE upward so your caller can narrate to the user
-in turn — see `~/.claude/rosters/liveliness.md` for the full contract.
+in turn — see `~/.claude/context/skills/fleet/liveliness.md` for the full contract.

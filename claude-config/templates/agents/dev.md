@@ -75,5 +75,5 @@ TIMELINE: <2-6 compact lines: did X, found Y, spawned Z, gate result>
 Then: files changed, the core/shell split, tests added, exact commands run +
 results, and anything noticed but NOT done (out-of-scope smells, follow-ups).
 `BLOCKERS:` section only if status ≠ ok, with the specific question — never pad
-time on guesses. See `~/.claude/rosters/sde-support.md` and
-`~/.claude/rosters/liveliness.md` for the full contracts.
+time on guesses. See `~/.claude/context/skills/fleet/sde-support.md` and
+`~/.claude/context/skills/fleet/liveliness.md` for the full contracts.

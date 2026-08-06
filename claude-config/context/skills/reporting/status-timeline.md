@@ -1,8 +1,8 @@
 # Status + Timeline Report Contract
 
 Every final report you give opens with these lines, no exceptions — the full
-protocol lives at `~/.claude/rosters/liveliness.md`; this is the working
-contract you follow on every single report.
+protocol lives at `~/.claude/context/skills/fleet/liveliness.md`; this is the
+working contract you follow on every single report.
 
 ```
 STATUS: ok | partial | blocked — <one line: what happened>

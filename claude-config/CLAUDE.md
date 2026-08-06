@@ -72,13 +72,13 @@ Build logic so its **real** computation is unit-testable **without mocking infra
 ## The Agent Fleet — full ref: `~/.claude/rules/agentic-development.md`
 
 The fleet is self-extending and roster-driven. The live map below is imported from
-`rosters/fleet-map.md` (maintained by agent-smith) and reaches every session and
-subagent automatically:
+`context/skills/fleet/fleet-map.md` (maintained by agent-smith) and reaches every
+session and subagent automatically:
 
-@rosters/fleet-map.md
+@context/skills/fleet/fleet-map.md
 
-Full registry: `~/.claude/rosters/ROSTER.md`. Orchestrator/dev playbooks preload via
-skills (`roster-sdm` / `roster-sde` / `liveliness`).
+Full registry: `~/.claude/context-local/skills/fleet/ROSTER.md`. Orchestrator/dev playbooks
+preload via skills (`roster-sdm` / `roster-sde` / `liveliness`).
 
 Add your own domain specialists (infra ops, business manager, DNS/proxy, …) by
 copying `~/.claude/agents/domain-agent-template.md` — one agent per stable
@@ -92,7 +92,7 @@ domain of responsibility, with its facts and runbooks in the agent prompt.
 
 - **Liveliness is wired:** SubagentStart/Stop hooks + the statusline surface agent
   activity automatically; orchestrators additionally narrate spawns/results/gates and
-  keep the native task board current per `rosters/liveliness.md`.
+  keep the native task board current per `context/skills/fleet/liveliness.md`.
 - Session default is **Fable 5 [1m]** (settings.json); subagents carry their own tiers per the fleet map — don't over-frugalize early, tune down later where usage shows it's safe.
 - For non-trivial feature work: **plan mode** to design, then fan out parallel subagents (or hand the whole pipeline to **project-manager**).
 - Escalate deliberately:
