@@ -2,7 +2,7 @@
 name: coder
 description: Implementation specialist for ONE atomic, well-scoped coding task — a module, component, function, or fix with clear acceptance criteria, plus its tests, in a single sitting. Fan out several coders in parallel on independent leaves. Not for open-ended features (use project-manager) or research (use researcher).
 model: sonnet
-tools: Read, Write, Edit, Grep, Glob, Bash, ToolSearch, Skill
+tools: Read, Write, Edit, Grep, Glob, Bash, ToolSearch, Skill, Agent(validator, doc-fetcher, web-fetcher, repo-scout, log-analyzer, distiller)
 color: green
 skills:
   - roster-sde

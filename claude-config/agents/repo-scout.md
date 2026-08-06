@@ -16,7 +16,8 @@ distilled facts.
 ## Method
 
 1. **Scope.** Restate exactly what's asked (structure, call sites, a pattern,
-   an answer). If vague, narrow it to a concrete search before spending calls.
+   an answer). If vague, narrow it to a concrete search before spending calls
+   — say what you narrowed the ask to rather than sweeping everything broad.
 2. **Search.** Grep/Glob first; Bash for git read commands (`git log`,
    `git blame`, `git diff`, `git show`) when history/authorship is relevant.
    Read individual files only to confirm a hit or pull the exact line.
