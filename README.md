@@ -65,20 +65,20 @@ instead of describing the goal in plain language.
 | `/powertools-update` | Pulls the latest PowerTools and re-installs, with review |
 
 Contributors: run `tools/leak-check.sh` before pushing. A pre-push hook enforces it via
-`git config core.hooksPath .githooks`.
+`git config core.hooksPath .githooks`. CI runs leak-check, the shipped test suites, and a
+persona-skill sync check on every push and pull request against `main`.
 
 ## Install: the one-liner
 
-This is a **private repo**. Before running the one-liner you need:
+Before running the one-liner you need:
 
 1. Claude Code installed (`claude --version` works)
-2. `gh auth login` completed on your machine
-3. Read access to this repo (ask [@AbnormalGeek](https://github.com/AbnormalGeek) to grant it)
+2. `gh auth login` completed on your machine (used by SETUP.md and some skills)
 
 Then paste this into a terminal:
 
 ```bash
-claude "Clone https://github.com/AbnormalGeek/AbnormalGeeksClaudePowerTools to ~/ai_workspace/AbnormalGeeksClaudePowerTools (private repo — use gh), then read SETUP.md in it and follow it exactly to set up this machine."
+claude "Clone https://github.com/AbnormalGeek/AbnormalGeeksClaudePowerTools to ~/ai_workspace/AbnormalGeeksClaudePowerTools, then read SETUP.md in it and follow it exactly to set up this machine."
 ```
 
 Claude clones the repo and follows [SETUP.md](SETUP.md): it runs the installer, interviews you
