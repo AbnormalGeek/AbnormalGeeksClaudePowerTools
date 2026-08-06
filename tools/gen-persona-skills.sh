@@ -1,7 +1,20 @@
 #!/usr/bin/env bash
 # tools/gen-persona-skills.sh — generates one loader skill per persona
-# manifest under claude-config/context/personas/, and removes stale
-# auto-generated loader skills whose manifest disappeared.
+# manifest, and removes stale auto-generated loader skills whose manifest
+# disappeared. Two modes:
+#
+#   repo mode (default) — reads claude-config/context/personas/ in this repo,
+#     writes claude-config/skills/persona-<group>-<persona>/SKILL.md. This is
+#     the public, shared doctrine library.
+#
+#   --local mode — reads a PRIVATE library directory (mirrors the
+#     ~/.claude/context-local/ overlay convention: <dir>/personas/<group>/
+#     <persona>.md manifests, <dir>/skills/<category>/<slice>.md slices) and
+#     writes into a caller-chosen --out directory. A --local manifest's slice
+#     list may mix two kinds of entries:
+#       - plain (e.g. "skills/foo/bar.md")   -> lives in the local dir itself
+#       - "shared:skills/foo/bar.md"         -> lives in the SHARED library,
+#         resolved against --shared-root (required alongside --local)
 #
 # Why: agent definitions can't @import a persona manifest directly (@import
 # only expands inside the CLAUDE.md/rules-file chain, never inside an agent
@@ -11,51 +24,81 @@
 # used by the roster-sdm / roster-sde / liveliness skills. Agents then list
 # the generated skill name in their own frontmatter `skills:` list.
 #
-# What it reads:
+# Overlay-aware loader body (BOTH modes): every slice a generated skill loads
+# is resolved at INVOCATION time (not generation time) so a private override
+# under ~/.claude/context-local/ always wins over the shared copy under
+# ~/.claude/context/ at the same relative path:
+#
+#   repo mode — one `for` loop over every slice path:
+#     !`for f in <slice1> <slice2>; do if [ -f "$HOME/.claude/context-local/$f" ]; then cat "$HOME/.claude/context-local/$f"; else cat "$HOME/.claude/context/$f"; fi; done`
+#
+#   --local mode — one explicit if/cat chain, one segment per slice, in
+#   manifest order:
+#     - plain entries cat straight from ~/.claude/context-local/<path> (no
+#       fallback — they ARE the local library, there's nothing to fall back to)
+#     - shared: entries get the same local-wins/shared-fallback if/else as
+#       repo mode, with the "shared:" prefix stripped from the path
+#
+# What it reads (repo mode):
 #   <root>/claude-config/context/personas/<group>/<persona>.md
+# What it reads (--local mode):
+#   <local-dir>/personas/<group>/<persona>.md
 #     ---
 #     persona: <name>
 #     group: <group>
 #     description: <one line>
 #     slices:
-#       - skills/<category>/<slice>.md
-#       - skills/<category2>/<slice2>.md
+#       - skills/<category>/<slice>.md          # local dir, both modes
+#       - shared:skills/<category>/<slice>.md   # shared root, --local only
 #     ---
 #     # Persona: <group>/<persona>
 #     <prose + @ lines — ignored; only the frontmatter above matters>
 #
 # What it writes:
-#   <root>/claude-config/skills/persona-<group>-<persona>/SKILL.md
-#     ---
-#     name: persona-<group>-<persona>
-#     description: Persona loader — <group>/<persona>: <description> (AUTO-GENERATED ...)
-#     ---
-#     # Persona: <group>/<persona> (live from ~/.claude/context/)
-#
-#     !`cat ~/.claude/context/skills/<slice1> ~/.claude/context/skills/<slice2>`
+#   repo mode:    <root>/claude-config/skills/persona-<group>-<persona>/SKILL.md
+#   --local mode: <--out dir>/persona-<group>-<persona>/SKILL.md
 #
 # Validation (any violation aborts the WHOLE run before anything is written —
 # a bad manifest never produces a partial output set):
-#   - every listed slice path must exist under claude-config/context/
-#   - every slice path must start with `skills/`
+#   - every listed slice path must exist (repo mode: under claude-config/
+#     context/; --local mode: plain under --local dir, shared: entries under
+#     --shared-root)
+#   - every slice path (after stripping any "shared:" prefix) must start with
+#     `skills/`
 #   - `persona` and `group` must be kebab-case
 #   - two manifests may not resolve to the same `persona-<group>-<persona>` name
+#   - --local mode requires both --out and --shared-root; missing either is
+#     an error (exit 2, before any manifest is even read)
+#   - --local mode: if the target SKILL.md for a name already exists and does
+#     NOT carry the local-generated marker (i.e. it's shared-generated or
+#     hand-written), that's a COLLISION — the run errors instead of
+#     overwriting it
 #
-# Stale cleanup: any existing claude-config/skills/persona-*/ directory whose
-# SKILL.md contains the AUTO-GENERATED marker but has no corresponding
-# manifest anymore is deleted. A hand-written skill directory that happens to
-# be named `persona-*` but lacks the marker is NEVER touched.
+# Stale cleanup: any existing persona-*/ directory whose SKILL.md contains
+# THIS RUN's marker but has no corresponding manifest anymore is deleted.
+#   - repo mode matches the shared marker ("AUTO-GENERATED by ...")
+#   - --local mode matches the local marker ("AUTO-GENERATED (local)") only —
+#     a shared-generated or hand-written persona-* skill is NEVER a stale-
+#     cleanup candidate in --local mode, even when no local manifest names it
+#   - a hand-written skill directory that happens to be named `persona-*` but
+#     lacks the relevant marker is NEVER touched by either mode
 #
 # Root resolution: script-directory based (this script lives in tools/, so
 # its parent is the repo root), overridable via the GEN_PERSONA_ROOT env var
 # — the seam the test suite uses to point the generator at a throwaway
-# fixture tree instead of the real repo.
+# fixture tree instead of the real repo. Only used by repo mode (and as the
+# base for the default claude-config/skills output dir); --local mode takes
+# all its paths from --local/--out/--shared-root instead.
 #
 # Usage:
-#   tools/gen-persona-skills.sh            generate/update/prune in place
-#   tools/gen-persona-skills.sh --check    report only; exit 1 if anything
-#                                          would change, 0 if already in sync
-#   tools/gen-persona-skills.sh --help     show this usage
+#   tools/gen-persona-skills.sh
+#       generate/update/prune the repo's shared personas in place
+#   tools/gen-persona-skills.sh --check
+#       report only; exit 1 if anything would change, 0 if already in sync
+#   tools/gen-persona-skills.sh --local <dir> --out <dir> --shared-root <dir> [--check]
+#       generate/update/prune a private persona library
+#   tools/gen-persona-skills.sh --help
+#       show this usage
 #
 # Graceful no-op: if the personas directory doesn't exist, or exists but has
 # no manifests, this prints a message and exits 0 without touching anything
@@ -64,26 +107,84 @@
 set -euo pipefail
 
 usage() {
-  sed -n '2,60p' "$0"
+  sed -n '2,/^set -euo pipefail/p' "$0" | sed '$d'
 }
 
 CHECK=0
-for arg in "$@"; do
-  case "$arg" in
-    --check) CHECK=1 ;;
-    -h|--help) usage; exit 0 ;;
-    *) printf 'Unknown argument: %s\n' "$arg" >&2; usage >&2; exit 2 ;;
+LOCAL_MODE=0
+LOCAL_DIR=""
+OUT_DIR=""
+SHARED_ROOT=""
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --check)
+      CHECK=1
+      shift
+      ;;
+    --local)
+      if [[ $# -lt 2 ]]; then
+        printf -- '--local requires a directory argument\n' >&2
+        exit 2
+      fi
+      LOCAL_MODE=1
+      LOCAL_DIR="$2"
+      shift 2
+      ;;
+    --out)
+      if [[ $# -lt 2 ]]; then
+        printf -- '--out requires a directory argument\n' >&2
+        exit 2
+      fi
+      OUT_DIR="$2"
+      shift 2
+      ;;
+    --shared-root)
+      if [[ $# -lt 2 ]]; then
+        printf -- '--shared-root requires a directory argument\n' >&2
+        exit 2
+      fi
+      SHARED_ROOT="$2"
+      shift 2
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      printf 'Unknown argument: %s\n' "$1" >&2
+      usage >&2
+      exit 2
+      ;;
   esac
 done
+
+if [[ $LOCAL_MODE -eq 1 ]]; then
+  if [[ -z "$OUT_DIR" ]]; then
+    printf 'ERROR: --out is required when --local is given\n' >&2
+    exit 2
+  fi
+  if [[ -z "$SHARED_ROOT" ]]; then
+    printf 'ERROR: --shared-root is required when --local is given\n' >&2
+    exit 2
+  fi
+fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="${GEN_PERSONA_ROOT:-$(cd "$SCRIPT_DIR/.." && pwd)}"
 
 CONTEXT_DIR="$ROOT/claude-config/context"
-SKILLS_DIR="$ROOT/claude-config/skills"
-PERSONAS_DIR="$CONTEXT_DIR/personas"
+
+if [[ $LOCAL_MODE -eq 1 ]]; then
+  PERSONAS_DIR="$LOCAL_DIR/personas"
+  SKILLS_DIR="$OUT_DIR"
+else
+  PERSONAS_DIR="$CONTEXT_DIR/personas"
+  SKILLS_DIR="$ROOT/claude-config/skills"
+fi
 
 MARKER="AUTO-GENERATED by tools/gen-persona-skills.sh"
+MARKER_LOCAL="AUTO-GENERATED (local)"
 KEBAB_RE='^[a-z0-9]+(-[a-z0-9]+)*$'
 
 # trim <string> — strip leading/trailing whitespace.
@@ -145,6 +246,9 @@ parse_manifest() {
 
 # validate_manifest <file> — validates the globals parse_manifest just set.
 # Prints one ERROR line per problem to stderr; returns nonzero if any found.
+# Slice resolution depends on mode: repo mode resolves every slice against
+# CONTEXT_DIR; --local mode resolves plain entries against LOCAL_DIR and
+# "shared:"-prefixed entries (prefix stripped) against SHARED_ROOT.
 validate_manifest() {
   local file="$1" ok=1
 
@@ -173,15 +277,29 @@ validate_manifest() {
     printf 'ERROR: %s: no slices listed\n' "$file" >&2
     ok=0
   else
-    local s
+    local s path_part base_dir label
     for s in "${MF_SLICES[@]}"; do
-      if [[ "$s" != skills/* ]]; then
+      if [[ $LOCAL_MODE -eq 1 && "$s" == shared:* ]]; then
+        path_part="${s#shared:}"
+        base_dir="$SHARED_ROOT"
+        label="shared root ($SHARED_ROOT)"
+      elif [[ $LOCAL_MODE -eq 1 ]]; then
+        path_part="$s"
+        base_dir="$LOCAL_DIR"
+        label="local dir ($LOCAL_DIR)"
+      else
+        path_part="$s"
+        base_dir="$CONTEXT_DIR"
+        label="$CONTEXT_DIR"
+      fi
+
+      if [[ "$path_part" != skills/* ]]; then
         printf 'ERROR: %s: slice "%s" does not start with skills/\n' "$file" "$s" >&2
         ok=0
         continue
       fi
-      if [[ ! -f "$CONTEXT_DIR/$s" ]]; then
-        printf 'ERROR: %s: slice "%s" does not exist under %s\n' "$file" "$s" "$CONTEXT_DIR" >&2
+      if [[ ! -f "$base_dir/$path_part" ]]; then
+        printf 'ERROR: %s: slice "%s" does not exist under %s\n' "$file" "$s" "$label" >&2
         ok=0
       fi
     done
@@ -191,24 +309,67 @@ validate_manifest() {
 }
 
 # render_skill <group> <persona> <description> <slice1> [slice2 ...] —
-# prints the exact SKILL.md content for one persona loader.
+# prints the exact SKILL.md content for one persona loader; dispatches to
+# the mode-specific renderer.
 render_skill() {
   local group="$1" persona="$2" description="$3"
   shift 3
-  local paths=() s
-  for s in "$@"; do
-    paths+=("~/.claude/context/$s")
-  done
-  local cat_line="${paths[*]}"
+  if [[ $LOCAL_MODE -eq 1 ]]; then
+    render_skill_local "$group" "$persona" "$description" "$@"
+  else
+    render_skill_repo "$group" "$persona" "$description" "$@"
+  fi
+}
+
+# render_skill_repo — repo-mode body: one `for` loop over every slice path,
+# local-overlay-wins / shared-fallback per file, resolved live at invocation.
+render_skill_repo() {
+  local group="$1" persona="$2" description="$3"
+  shift 3
+  local slices="$*"
 
   cat <<EOF
 ---
 name: persona-${group}-${persona}
 description: Persona loader — ${group}/${persona}: ${description} (AUTO-GENERATED by tools/gen-persona-skills.sh — edit the manifest/slices and regenerate; do not hand-edit)
 ---
-# Persona: ${group}/${persona} (live from ~/.claude/context/)
+# Persona: ${group}/${persona} (live from ~/.claude/context/, local overlay wins)
 
-!\`cat ${cat_line}\`
+!\`for f in ${slices}; do if [ -f "\$HOME/.claude/context-local/\$f" ]; then cat "\$HOME/.claude/context-local/\$f"; else cat "\$HOME/.claude/context/\$f"; fi; done\`
+EOF
+}
+
+# render_skill_local — --local-mode body: one explicit if/cat segment per
+# slice, joined with "; ", in manifest order. Plain entries cat straight from
+# the local dir (no fallback); "shared:" entries get the same local-wins/
+# shared-fallback if/else as repo mode, prefix stripped.
+render_skill_local() {
+  local group="$1" persona="$2" description="$3"
+  shift 3
+  local chain="" s stripped seg first=1
+  for s in "$@"; do
+    if [[ "$s" == shared:* ]]; then
+      stripped="${s#shared:}"
+      seg="if [ -f \"\$HOME/.claude/context-local/${stripped}\" ]; then cat \"\$HOME/.claude/context-local/${stripped}\"; else cat \"\$HOME/.claude/context/${stripped}\"; fi"
+    else
+      seg="cat \"\$HOME/.claude/context-local/${s}\""
+    fi
+    if [[ $first -eq 1 ]]; then
+      chain="$seg"
+      first=0
+    else
+      chain="${chain}; ${seg}"
+    fi
+  done
+
+  cat <<EOF
+---
+name: persona-${group}-${persona}
+description: Persona loader — ${group}/${persona}: ${description} (AUTO-GENERATED (local) by tools/gen-persona-skills.sh --local — edit the manifest/slices and regenerate; do not hand-edit)
+---
+# Persona: ${group}/${persona} (local library; shared: slices fall back to the shared library)
+
+!\`${chain}\`
 EOF
 }
 
@@ -274,11 +435,15 @@ fi
 
 # ---------------------------------------------------------------------------
 # Compute the desired state (name -> content), diffed against what's on disk.
+# --local mode additionally guards against silently overwriting a shared-
+# generated or hand-written skill that happens to share the target name —
+# that's a collision, and it aborts the whole run instead of overwriting.
 # ---------------------------------------------------------------------------
 declare -A CONTENT
 EXPECTED_NAMES=()
 CREATED=() UPDATED=() UNCHANGED=()
 
+collision_error=0
 for ((i = 0; i < ${#M_FILE[@]}; i++)); do
   mapfile -t slices <<< "${M_SLICES_JOINED[i]}"
 
@@ -290,6 +455,12 @@ for ((i = 0; i < ${#M_FILE[@]}; i++)); do
   target="$SKILLS_DIR/$name/SKILL.md"
   if [[ -f "$target" ]]; then
     existing="$(cat "$target")"
+    if [[ $LOCAL_MODE -eq 1 && "$existing" != *"$MARKER_LOCAL"* ]]; then
+      printf 'ERROR: %s already exists at %s and is not local-generated (missing "%s" marker) — refusing to overwrite a shared or hand-written skill\n' \
+        "$name" "$target" "$MARKER_LOCAL" >&2
+      collision_error=1
+      continue
+    fi
     if [[ "$existing" == "$content" ]]; then
       UNCHANGED+=("$name")
     else
@@ -300,9 +471,16 @@ for ((i = 0; i < ${#M_FILE[@]}; i++)); do
   fi
 done
 
+if [[ $collision_error -eq 1 ]]; then
+  exit 1
+fi
+
 # ---------------------------------------------------------------------------
-# Stale cleanup candidates: existing persona-* dirs carrying the
-# AUTO-GENERATED marker with no manifest producing them anymore.
+# Stale cleanup candidates: existing persona-* dirs carrying THIS RUN's
+# marker with no manifest producing them anymore. repo mode only ever
+# considers shared-marked skills; --local mode only ever considers
+# local-marked skills — so a --local run never deletes a shared-generated
+# (or hand-written) persona-* skill, even when no local manifest names it.
 # ---------------------------------------------------------------------------
 DELETED=()
 if [[ -d "$SKILLS_DIR" ]]; then
@@ -314,12 +492,18 @@ if [[ -d "$SKILLS_DIR" ]]; then
     return 1
   }
 
+  if [[ $LOCAL_MODE -eq 1 ]]; then
+    cleanup_marker="$MARKER_LOCAL"
+  else
+    cleanup_marker="$MARKER"
+  fi
+
   while IFS= read -r -d '' d; do
     base="$(basename "$d")"
     [[ "$base" == persona-* ]] || continue
     smd="$d/SKILL.md"
     [[ -f "$smd" ]] || continue
-    grep -qF "$MARKER" "$smd" || continue
+    grep -qF "$cleanup_marker" "$smd" || continue
     is_expected "$base" && continue
     DELETED+=("$base")
   done < <(find "$SKILLS_DIR" -mindepth 1 -maxdepth 1 -type d -print0 | sort -z)
