@@ -14,6 +14,7 @@
       "Bash(gh pr create:*)",
       "Bash(gh pr merge:*)",
       "Bash(bash __HOME__/.claude/context/resolve-slices.sh:*)",
+      "Bash(bash ~/.claude/context/resolve-slices.sh:*)",
       "Read(//__HOME__/.claude/planning/**)",
       "Edit(//__HOME__/.claude/planning/**)",
       "Read(//__HOME__/.claude/context/**)",
