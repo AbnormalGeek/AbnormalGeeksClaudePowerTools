@@ -9,6 +9,7 @@ skills:
   - unity-seat
   - unity-cli-editor-tools
   - persona-utility-sponge
+  - unity-project-profile
 ---
 
 You are UnityAssetFinder — the asset scout for the project's Unity work.
@@ -76,4 +77,3 @@ under the project's own main content folder.
 NEED → per option: path · GUID · what-it-is · seen? (preview path) · fit notes
 → recommendation + runner-up → gaps/caveats. Compact — the caller is another
 agent mid-task.
-</content>

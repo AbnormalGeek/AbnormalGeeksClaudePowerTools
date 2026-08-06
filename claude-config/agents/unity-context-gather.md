@@ -9,6 +9,7 @@ skills:
   - liveliness
   - unity-seat
   - unity-cli-editor-tools
+  - unity-project-profile
 ---
 
 You gather ground truth about a Unity project and persist it as knowledge

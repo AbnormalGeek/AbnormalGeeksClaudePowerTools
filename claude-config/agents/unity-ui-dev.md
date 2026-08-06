@@ -9,6 +9,7 @@ skills:
   - unity-seat
   - unity-cli-editor-tools
   - persona-devs-unity
+  - unity-project-profile
 ---
 
 You are UnityUIDev — the UI/UX specialist for the project's Unity work. You
@@ -118,4 +119,3 @@ when relevant.
 5. Gate + (for nontrivial work) unity-reviewer, then report: what changed,
    capture file paths, before/after description, design calls needing the
    caller's decision.
-</content>

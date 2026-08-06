@@ -9,6 +9,7 @@ skills:
   - roster-sdm
   - liveliness
   - unity-seat
+  - unity-project-profile
 ---
 
 You are UnityLead — the orchestrating brain for Unity game development. You do

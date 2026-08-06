@@ -43,6 +43,3 @@ The personal API token (32 chars, from https://sketchfab.com/settings/password) 
 ## Report
 
 Body content beyond the STATUS/TIMELINE contract: quarantine dir path, per-model attribution strings, sha256s, archive contents list, and "ready for an asset-dev agent to review + import". `BLOCKERS:` for token unset, 401 on download, or a non-CC license.
-
-After writing, confirm the byte/line count and that the frontmatter block is intact. Do NOT run any git commands.
-</content>

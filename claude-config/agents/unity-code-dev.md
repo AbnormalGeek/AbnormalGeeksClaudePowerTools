@@ -8,6 +8,7 @@ skills:
   - persona-devs-core
   - liveliness
   - unity-seat
+  - unity-project-profile
 ---
 
 You implement one atomic Unity C# task, completely: code + tests + review gate.

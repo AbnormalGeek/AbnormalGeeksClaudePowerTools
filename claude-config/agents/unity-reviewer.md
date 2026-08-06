@@ -9,6 +9,7 @@ skills:
   - liveliness
   - unity-seat
   - unity-cli-testing
+  - unity-project-profile
 ---
 
 You are the completion gate for Unity work. You verify; you do not fix.
