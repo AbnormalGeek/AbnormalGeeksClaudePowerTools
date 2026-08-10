@@ -34,7 +34,9 @@ each one is for.
 > `skills/fleet/*` are read live by the hand-maintained `roster-sdm` / `roster-sde` /
 > `liveliness` skills (each `!cat`s its file, private `context-local/` overlay first, then
 > this shared copy) and by the `CLAUDE.md` `@import` of `fleet-map.md`. They are **not**
-> wired into the generated-persona system above; listed here for discoverability only.
+> wired into the generated-persona system above (exception: `cross-session.md`, which is
+> also preloaded into orchestrators via the orch/lead persona); listed here for
+> discoverability only.
 
 | Path | Hook |
 |------|------|
@@ -42,6 +44,7 @@ each one is for.
 | `skills/fleet/sdm-playbook.md` | HOW orchestrators delegate: the atomic-leaf contract, waving, gating, and growing the roster. |
 | `skills/fleet/sde-support.md` | WHO a dev agent calls when stuck: the support web (validator, doc-fetcher, web-fetcher, repo-scout, log-analyzer, distiller) plus leaf discipline. |
 | `skills/fleet/liveliness.md` | The five-channel liveliness protocol so the terminal never looks dead while work is delegated. |
+| `skills/fleet/cross-session.md` | Peer-session messaging: who has ListAgents/SendMessage, the dispatch protocol + etiquette, and the machine-local workspace roster. |
 
 ## Personas
 

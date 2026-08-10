@@ -29,6 +29,10 @@
 6. **Sole-operator domains are their own leaves.** Some domains have one designated
    agent (see the tier tables below) — any touch of that domain, read or write, is a
    dedicated leaf for its agent, never folded into another agent's prompt.
+7. **Cross-workspace task → message the peer session, not the user.** Top-level sessions
+   use ListAgents/SendMessage (`/peers`) to brief the live session owning that workspace,
+   starting one via your session launcher/tmux if absent. Subagents lack the tools — report
+   `PEER-TASK: <workspace> — <ask>` upward. Doctrine: `skills/fleet/cross-session.md`.
 
 ## Tiers
 
