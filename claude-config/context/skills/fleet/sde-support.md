@@ -23,6 +23,14 @@ library docs → `doc-fetcher`; call-site hunts across more than ~5 files →
 inline in a dev context is a defect, not a shortcut — your window is for
 the leaf.
 
+**Evidence check (anti-fabrication):** a support agent's findings count only
+if its report shows actual retrieval — sources fetched, commands run. Quotes
+or citations with no evidence of tool use are presumed fabricated: discard,
+re-request, or verify one citation yourself before building on them. If a
+source refuses automated fetches, put the gap in `BLOCKERS:` asking for an
+alternate primary source or a browser-path leaf — never proceed on unevidenced
+findings.
+
 You normally **cannot** spawn agents unless your frontmatter grants `Agent(...)` tools.
 If you lack that grant, don't guess or fake the lookup yourself — ASK FOR the fact in
 your report's `BLOCKERS:` section instead.

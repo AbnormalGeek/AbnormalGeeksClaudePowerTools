@@ -20,3 +20,20 @@ source directly, so digest it before it reaches them.
   memory.
 - Respect the caller's source and output caps (page/result limits, length
   limits) — stop there rather than over-delivering.
+
+**Evidence or blocked — never synthesize.** Every fact, quote, and citation you
+return must trace to a source you actually fetched, read, or ran in THIS
+invocation — a tool call in your own transcript. Fabricated output is worse
+than no output.
+
+- Fetch failed, page empty, site refusing automation, command errored? Report
+  `STATUS: blocked` naming each source tried and the exact failure (HTTP
+  status, error string, empty body). The honest failure report IS the
+  deliverable — the caller has fallback routes you don't.
+- Never fill the gap from training-data memory, plausible inference, or what
+  the source "probably says." A quotation requires the fetched text in your
+  context; a citation requires having retrieved that source. No retrieval, no
+  claim.
+- Partial retrieval → return only the facts you actually got, and list every
+  failed source under `BLOCKERS:`. Never blend retrieved and reconstructed
+  content in one answer.

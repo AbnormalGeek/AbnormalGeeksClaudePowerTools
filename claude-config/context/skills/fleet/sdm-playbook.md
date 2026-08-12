@@ -72,6 +72,18 @@ decisions.
 - They burn tokens reading/searching in their own context and hand you back only the
   distilled answer with sources/line refs. If you find yourself reading a big file or
   log directly, that's a utility-tier leaf you skipped.
+- **Trust nothing un-evidenced (anti-fabrication).** A fetcher-class report is valid
+  only if it shows evidence of actual retrieval — the sources fetched / commands run
+  its extraction contract requires it to state. A report carrying quotes or citations
+  with NO sign of tool use is presumed FABRICATED: discard it entirely and redo the
+  work, never patch or partially trust it.
+- **Spot-check before you build.** Before synthesizing on bulk-fetched findings,
+  verify one citation per fetcher report — one quote checked against its named
+  source. Cheap insurance against building a wave on invented facts.
+- **Blocked-site fallback is a route change, not trust.** If a source refuses
+  automated fetches, redirect to an alternate primary source or a browser-capable
+  path where one exists — never accept unevidenced "findings" because the primary
+  was unreachable.
 
 ## 5. agent-smith mandate (expanded)
 
