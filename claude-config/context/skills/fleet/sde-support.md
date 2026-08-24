@@ -48,6 +48,9 @@ your report's `BLOCKERS:` section instead.
 - Functional-core + DI standards apply (global rules already in your context via
   `~/.claude/rules/testable-business-logic.md`): pure decisions, effects in a thin
   shell, everything non-deterministic injected.
+- **GitHub Actions secrets (repo or environment) → the `gh-env-secrets` skill** (Skill
+  tool): gitignored template → user fills locally → stdin-pipe to `gh secret set` →
+  shred. Never ask the user to paste a secret into chat; never pass values via `--body`/argv.
 
 ## 3. When blocked
 
