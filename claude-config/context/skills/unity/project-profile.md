@@ -5,8 +5,13 @@
 > across any Unity project; this file is the one piece that is genuinely
 > project-specific. Either edit this copy directly, or — if you want the
 > generic slices to stay untouched and shareable — drop your filled-in
-> version at `~/.claude/context-local/skills/unity/project-profile.md`, which
-> the `unity-project-profile` loader skill prefers automatically.
+> version at `<repo>/.claude/context-local/skills/unity/project-profile.md`
+> (created by `/setup-project --stack unity`), the PROJECT tier that the
+> `unity-project-profile` loader skill resolves first. The machine-global
+> slot at `~/.claude/context-local/skills/unity/project-profile.md` is for
+> single-project machines only — never let it hold one project's profile on
+> a multi-project machine, since it would shadow the generic template for
+> every other project's sessions/agents.
 
 ## Project identity
 
