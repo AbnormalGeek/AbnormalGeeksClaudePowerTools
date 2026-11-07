@@ -22,6 +22,9 @@ jobs:
       - name: leak-check test suite
         run: tools/test/leak-check-test.sh
 
+      - name: subagent-liveliness hook test suite
+        run: claude-config/hooks/test/subagent-liveliness-test.sh
+
       - name: gen-persona-skills test suite
         run: tools/test/gen-persona-skills-test.sh
 

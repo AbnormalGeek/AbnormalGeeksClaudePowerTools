@@ -23,7 +23,7 @@ Run each check. If one fails, fix it (with the user's help where needed) before 
 
 ```bash
 claude --version        # Claude Code installed (you are proof, but capture the version)
-gh auth status          # GitHub CLI authenticated — required (this repo is private)
+gh auth status          # GitHub CLI authenticated — recommended (this repo is public, so cloning does not need it)
 git --version           # git present
 jq --version            # jq present — REQUIRED: statusline.sh, the Notification hook, and
                         #   the SubagentStart/Stop liveliness hook all use it
