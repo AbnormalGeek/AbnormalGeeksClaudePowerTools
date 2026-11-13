@@ -1,26 +1,47 @@
 #!/usr/bin/env bash
-# .githooks/pre-push — standing leak guard, wired via:
+# .githooks/pre-push: standing leak guard, wired via:
 #   git config core.hooksPath .githooks
 #
-# Runs tools/leak-check.sh in tree mode (working tree, not full history —
+# Runs tools/leak-check.sh in tree mode (working tree, not full history,
 # fast enough to run on every push) and blocks the push if it finds any
 # non-allowlisted personal/homelab content or credential-shaped string.
-set -euo pipefail
+#
+# Fails CLOSED: this is a public repo, so if the check cannot run (script
+# missing, unreadable, not executable, or it fails for any reason other than
+# its documented exit codes) the push is refused. There is no skip switch.
+#   leak-check exit 0 = clean, 1 = findings, anything else = infrastructure.
+set -uo pipefail
 
-REPO_ROOT="$(git rev-parse --show-toplevel)"
+REPO_ROOT="$(git rev-parse --show-toplevel)" || {
+  echo "pre-push BLOCKED: cannot resolve the repo root; refusing to push a public repo unchecked" >&2
+  exit 1
+}
 LEAK_CHECK="$REPO_ROOT/tools/leak-check.sh"
 
-if [[ ! -x "$LEAK_CHECK" ]]; then
-  echo "pre-push: tools/leak-check.sh missing or not executable — skipping leak check" >&2
-  exit 0
-fi
-
-if ! "$LEAK_CHECK"; then
-  echo "" >&2
-  echo "pre-push BLOCKED: leak-check found personal/homelab content or credential-shaped strings above." >&2
-  echo "Fix the flagged lines (or extend the allowlist in tools/leak-check.sh if it's a false positive)," >&2
-  echo "then push again. To bypass in a genuine emergency: git push --no-verify (avoid if possible)." >&2
+if [[ ! -e "$LEAK_CHECK" ]]; then
+  echo "pre-push BLOCKED: leak-check missing (tools/leak-check.sh); refusing to push a public repo unchecked" >&2
   exit 1
 fi
 
-exit 0
+if [[ ! -f "$LEAK_CHECK" || ! -r "$LEAK_CHECK" || ! -x "$LEAK_CHECK" ]]; then
+  echo "pre-push BLOCKED: leak-check not runnable (tools/leak-check.sh is not a readable executable file); refusing to push a public repo unchecked" >&2
+  exit 1
+fi
+
+"$LEAK_CHECK"
+rc=$?
+
+case "$rc" in
+  0) exit 0 ;;
+  1)
+    echo "" >&2
+    echo "pre-push BLOCKED: leak-check found personal/homelab content or credential-shaped strings above." >&2
+    echo "Fix the flagged lines (or extend the allowlist in tools/leak-check.sh if it's a false positive)," >&2
+    echo "then push again." >&2
+    exit 1
+    ;;
+  *)
+    echo "pre-push BLOCKED: leak-check failed to run (exit $rc, expected 0 or 1); refusing to push a public repo unchecked" >&2
+    exit 1
+    ;;
+esac

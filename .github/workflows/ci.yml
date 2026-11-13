@@ -28,6 +28,9 @@ jobs:
       - name: gen-persona-skills test suite
         run: tools/test/gen-persona-skills-test.sh
 
+      - name: pre-push hook test suite
+        run: tools/test/pre-push-test.sh
+
       - name: gen-persona-skills --check (generated skills in sync)
         run: tools/gen-persona-skills.sh --check
 
